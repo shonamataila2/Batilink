@@ -123,5 +123,7 @@ function renderLists(){
 function esc(v){return String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
+  <script src="batilink-config.js"></script>
+<script src="batilink-account.js"></script>
 </body>
 </html>
