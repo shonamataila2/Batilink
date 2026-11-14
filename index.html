@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173c35">
+  <meta name="description" content="BatiLink — la plateforme BTP de Nouvelle-Calédonie">
+  <link rel="manifest" href="manifest.json">
+  <title>BatiLink — Prototype V1</title>
+  <style>
+    :root{--green:#173c35;--mint:#e6f1ed;--orange:#e9a23b;--ink:#182321;--muted:#64736e;--line:#dce5e1;--bg:#f5f8f6}
+    *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--ink)}
+    header{background:var(--green);color:white;padding:18px 16px 22px;border-radius:0 0 22px 22px}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:12px}.brand{font-weight:850;font-size:25px;letter-spacing:-1px}
+    .tag{font-size:11px;border:1px solid #ffffff66;padding:5px 9px;border-radius:20px}
+    header h1{font-size:24px;line-height:1.15;margin:22px 0 8px;max-width:440px}header p{margin:0;color:#d9e8e3;font-size:14px}
+    main{max-width:760px;margin:auto;padding:16px 14px 90px}.section-title{font-size:18px;margin:20px 2px 12px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tile,.card{background:white;border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:0 3px 12px #183b3210}
+    .tile{min-height:116px;text-align:left;cursor:pointer}.tile b{display:block;margin:8px 0 4px}.tile span,.muted{font-size:13px;color:var(--muted);line-height:1.4}
+    .emoji{font-size:25px}.card{margin-bottom:12px}.hidden{display:none!important}
+    label{display:block;font-size:13px;font-weight:700;margin:12px 0 6px}input,select,textarea{width:100%;border:1px solid #ccd9d3;border-radius:10px;padding:12px;font:inherit;background:white;color:var(--ink)}
+    textarea{min-height:100px;resize:vertical}.btn{border:0;border-radius:11px;background:var(--green);color:white;padding:12px 15px;font-weight:750;font-size:14px;cursor:pointer}
+    .btn.secondary{background:var(--mint);color:var(--green)}.btn.warn{background:#fff0d9;color:#744400}.btn.full{width:100%;margin-top:14px}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.pill{display:inline-block;background:var(--mint);color:var(--green);padding:5px 9px;border-radius:20px;font-size:11px;font-weight:700}
+    nav{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:9px 4px calc(9px + env(safe-area-inset-bottom));z-index:3}
+    nav button{background:none;border:0;color:var(--muted);font-size:11px;font-weight:700;padding:5px;cursor:pointer}nav button strong{display:block;font-size:19px;margin-bottom:2px}
+    .notice{background:#fff7e8;border:1px solid #f2d7a8;border-radius:12px;padding:12px;font-size:12px;color:#664a1d;line-height:1.45}
+    .status{font-size:12px;font-weight:750}.pending{color:#99620a}.approved{color:#17734e}.rejected{color:#a43131}
+    footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
+    @media(min-width:620px){header{padding:24px max(24px,calc((100% - 720px)/2)) 28px}.grid{grid-template-columns:repeat(3,1fr)}main{padding-top:24px}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="top"><div class="brand">BatiLink</div><span class="tag">NOUVELLE-CALÉDONIE</span></div>
+  <h1>Vos travaux. Les bons professionnels. Un chantier mieux suivi.</h1>
+  <p>La plateforme de mise en relation et de suivi des chantiers BTP.</p>
+</header>
+<main>
+  <section id="home">
+    <h2 class="section-title">Bienvenue sur BatiLink</h2>
+    <div class="grid">
+      <button class="tile" onclick="show('request')"><span class="emoji">🏠</span><b>Je cherche un professionnel</b><span>Déposer une demande de travaux.</span></button>
+      <button class="tile" onclick="show('pro')"><span class="emoji">🦺</span><b>Je suis professionnel</b><span>Créer mon dossier entreprise ou artisan.</span></button>
+      <button class="tile" onclick="show('tracking')"><span class="emoji">📋</span><b>Suivre un chantier</b><span>Voir les demandes et leur statut de test.</span></button>
+    </div>
+    <h2 class="section-title">Comment ça marche ?</h2>
+    <div class="card"><b>1. Décrivez vos travaux</b><p class="muted">Indiquez le métier, la commune, votre projet et ajoutez vos photos lors de la prochaine version connectée.</p></div>
+    <div class="card"><b>2. Recevez des propositions</b><p class="muted">Les professionnels correspondant au métier et à la zone pourront répondre.</p></div>
+    <div class="card"><b>3. Suivez votre chantier</b><p class="muted">Devis, avancement, photos et échanges seront réunis au même endroit.</p></div>
+  </section>
+
+  <section id="request" class="hidden">
+    <div class="row"><button class="btn secondary" onclick="show('home')">← Accueil</button><span class="pill">Espace client</span></div>
+    <h2 class="section-title">Déposer une demande de travaux</h2>
+    <form id="requestForm" class="card">
+      <label>Type de travaux *</label><select name="trade" required><option value="">Choisir un métier</option><option>Gros œuvre / Maçonnerie</option><option>VRD / Terrassement</option><option>Construction générale</option><option>Électricité</option><option>Plomberie / Sanitaire</option><option>Climatisation / Ventilation</option><option>Charpente / Couverture</option><option>Menuiserie</option><option>Peinture / Revêtements</option><option>Étanchéité</option><option>Aménagement extérieur</option><option>Architecte / Bureau d'études</option></select>
+      <label>Commune du chantier *</label><select name="commune" required><option value="">Choisir une commune</option><option>Nouméa</option><option>Dumbéa</option><option>Mont-Dore</option><option>Païta</option><option>La Foa</option><option>Bourail</option><option>Koné</option><option>Poindimié</option><option>Hienghène</option><option>Autre commune</option></select>
+      <label>Description du projet *</label><textarea name="description" required placeholder="Décrivez les travaux à réaliser…"></textarea>
+      <label>Budget estimatif (XPF)</label><input name="budget" type="number" min="0" placeholder="Ex. 500000">
+      <label>Date souhaitée de démarrage</label><input name="date" type="date">
+      <label>Votre nom *</label><input name="name" required placeholder="Nom et prénom">
+      <label>Téléphone *</label><input name="phone" required type="tel" placeholder="Votre numéro">
+      <button class="btn full" type="submit">Enregistrer ma demande de test</button>
+    </form>
+  </section>
+
+  <section id="pro" class="hidden">
+    <div class="row"><button class="btn secondary" onclick="show('home')">← Accueil</button><span class="pill">Espace professionnel</span></div>
+    <h2 class="section-title">Créer un dossier professionnel</h2>
+    <div class="notice">Les documents officiels, contrôles RIDET et assurances seront gérés dans la version sécurisée. Ne transmettez pas de documents sensibles dans ce prototype.</div>
+    <form id="proForm" class="card">
+      <label>Type de professionnel *</label><select name="kind" required><option value="">Choisir</option><option>Entreprise</option><option>Artisan indépendant patenté</option></select>
+      <label>Nom commercial / Nom de l'artisan *</label><input name="company" required>
+      <label>Numéro RIDET *</label><input name="ridet" required>
+      <label>Nom du responsable *</label><input name="owner" required>
+      <label>Téléphone *</label><input name="phone" type="tel" required>
+      <label>E-mail *</label><input name="email" type="email" required>
+      <label>Métier principal *</label><select name="trade" required><option value="">Choisir</option><option>Gros œuvre / Maçonnerie</option><option>VRD / Terrassement</option><option>Construction générale</option><option>Électricité</option><option>Plomberie / Sanitaire</option><option>Climatisation / Ventilation</option><option>Charpente / Couverture</option><option>Menuiserie</option><option>Peinture / Revêtements</option><option>Étanchéité</option><option>Aménagement extérieur</option><option>Architecte / Bureau d'études</option></select>
+      <label>Communes d'intervention</label><input name="areas" placeholder="Ex. Nouméa, Dumbéa, Païta">
+      <label>Assurance professionnelle</label><select name="insurance"><option>À fournir lors de la vérification</option><option>Attestation disponible</option><option>À vérifier selon mon activité</option></select>
+      <button class="btn full" type="submit">Envoyer mon dossier de test</button>
+    </form>
+  </section>
+
+  <section id="tracking" class="hidden">
+    <div class="row"><button class="btn secondary" onclick="show('home')">← Accueil</button><span class="pill">Suivi</span></div>
+    <h2 class="section-title">Demandes enregistrées sur cet appareil</h2>
+    <div id="requestsList"></div>
+    <h2 class="section-title">Dossiers professionnels</h2>
+    <div id="prosList"></div>
+    <div class="notice">Ces données restent uniquement dans le stockage local de ce navigateur. Elles ne sont pas envoyées à BatiLink ni visibles par d'autres utilisateurs.</div>
+  </section>
+
+  <section id="admin" class="hidden">
+    <div class="row"><button class="btn secondary" onclick="show('home')">← Accueil</button><span class="pill">Administration de démonstration</span></div>
+    <h2 class="section-title">Validation des professionnels</h2>
+    <div class="notice">Espace de démonstration sans connexion ni protection administrateur. Ne l'utilisez pas pour traiter de vrais dossiers.</div>
+    <div id="adminList"></div>
+  </section>
+  <footer>BatiLink — Prototype de démonstration V1 · Données fictives ou locales</footer>
+</main>
+<nav>
+  <button onclick="show('home')"><strong>⌂</strong>Accueil</button>
+  <button onclick="show('request')"><strong>＋</strong>Demande</button>
+  <button onclick="show('pro')"><strong>♙</strong>Professionnel</button>
+  <button onclick="show('tracking')"><strong>▤</strong>Suivi</button>
+  <button onclick="show('admin')"><strong>⚙</strong>Admin</button>
+</nav>
+<script>
+const sections=['home','request','pro','tracking','admin'];
+function show(id){sections.forEach(s=>document.getElementById(s).classList.toggle('hidden',s!==id));if(id==='tracking'||id==='admin')renderLists();window.scrollTo(0,0)}
+function get(k){try{return JSON.parse(localStorage.getItem('bl_'+k)||'[]')}catch(e){return []}}
+function put(k,v){localStorage.setItem('bl_'+k,JSON.stringify(v))}
+document.getElementById('requestForm').addEventListener('submit',e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));d.id=Date.now();d.status='Demande enregistrée (test)';put('requests',[d,...get('requests')]);e.target.reset();alert('Demande enregistrée sur cet appareil. Elle n’a pas été transmise à des professionnels.');show('tracking')});
+document.getElementById('proForm').addEventListener('submit',e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));d.id=Date.now();d.status='En attente de vérification';put('pros',[d,...get('pros')]);e.target.reset();alert('Dossier de démonstration enregistré sur cet appareil. Aucun contrôle officiel n’a été effectué.');show('tracking')});
+function renderLists(){
+ const rs=get('requests'),ps=get('pros');
+ document.getElementById('requestsList').innerHTML=rs.length?rs.map(x=>`<div class="card"><b>${esc(x.trade)}</b><p class="muted">${esc(x.commune)} · ${esc(x.name)}</p><p>${esc(x.description)}</p><span class="pill">${esc(x.status)}</span></div>`).join(''):'<p class="muted">Aucune demande enregistrée.</p>';
+ const prosHtml=ps.length?ps.map(x=>`<div class="card"><b>${esc(x.company)}</b><p class="muted">${esc(x.kind)} · RIDET : ${esc(x.ridet)} · ${esc(x.trade)}</p><span class="status pending">${esc(x.status)}</span></div>`).join(''):'<p class="muted">Aucun dossier professionnel.</p>';
+ document.getElementById('prosList').innerHTML=prosHtml;document.getElementById('adminList').innerHTML=prosHtml;
+}
+function esc(v){return String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body></html>
