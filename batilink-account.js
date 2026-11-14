@@ -51,24 +51,24 @@ function connectAccount(client) {
     }
     userId = nextUser;
     renderAccount();
-    if (!document.getElementById('tracking').classList.contains('hidden')) {
+    if (document.getElementById('tracking')?.classList.contains('hidden')===false) {
       setTimeout(refreshRequests, 0);
     }
   });
 
   function renderAccount() {
-    accountForm.hidden = Boolean(userId);
-    logout.hidden = !userId;
-    accountStatus.textContent = userId ? 'Tu es connectée.' : 'Connecte-toi ou crée un compte pour retrouver tes demandes sur un autre appareil.';
-    requestMode.textContent = userId ? 'Ta demande sera enregistrée dans ton compte.' : 'Connecte-toi depuis Compte pour enregistrer ta demande.';
+    if(accontForm)accountForm.hidden = Boolean(userId);
+    if(logout)logout.hidden = !userId;
+   if(accountStatus) accountStatus.textContent = userId ? 'Tu es connectée.' : 'Connecte-toi ou crée un compte pour retrouver tes demandes sur un autre appareil.';
+    if(requestMode)requestMode.textContent = userId ? 'Ta demande sera enregistrée dans ton compte.' : 'Connecte-toi depuis Compte pour enregistrer ta demande.';
     if (!userId) {
       refreshVersion++;
-      onlineList.replaceChildren();
-      onlineStatus.textContent = 'Ouvre Compte et connecte-toi pour retrouver tes demandes.';
+     if(onlineList) onlineList.replaceChildren();
+      if(onlineStatus)onlineStatus.textContent = 'Ouvre Compte et connecte-toi pour retrouver tes demandes.';
     }
   }
 
-  accountForm.addEventListener('submit', async event => {
+ if(accounForm) accountForm.addEventListener('submit', async event => {
     event.preventDefault();
     const credentials = Object.fromEntries(new FormData(accountForm));
     const signup = event.submitter?.value === 'signup';
