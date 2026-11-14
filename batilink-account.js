@@ -33,7 +33,7 @@ function connectAccount(client) {
   let requestId = null;
   let refreshVersion = 0;
 
-  online.hidden = false;
+ if(online) online.hidden = false;
   requestButton.textContent = 'Enregistrer dans mon compte';
   renderAccount();
 
