@@ -70,7 +70,7 @@ if (accountForm) accountForm.hidden = Boolean(userId);
      if(onlineList) onlineList.replaceChildren();
       if(onlineStatus)onlineStatus.textContent = 'Ouvre Compte et connecte-toi pour retrouver tes demandes.';
     }
-  
+  }
 
  if(accounForm) accountForm.addEventListener('submit', async event => {
     event.preventDefault();
