@@ -39,6 +39,11 @@
 <main>
   <section id="home">
     <h2 class="section-title">Bienvenue sur BatiLink</h2>
+    
+<button type="button" onclick="show('account')" style="background:#173c35;color:white;border:0;border-radius:10px;padding:14px 20px;margin:12px 0;cursor:pointer;font-weight:bold;">
+  🔐 Connexion à mon compte
+</button>
+
     <div class="grid">
       <button class="tile" onclick="show('request')"><span class="emoji">🏠</span><b>Je cherche un professionnel</b><span>Déposer une demande de travaux.</span></button>
       <button class="tile" onclick="show('pro')"><span class="emoji">🦺</span><b>Je suis professionnel</b><span>Créer mon dossier entreprise ou artisan.</span></button>
@@ -98,6 +103,40 @@
     <div class="notice">Espace de démonstration sans connexion ni protection administrateur. Ne l'utilisez pas pour traiter de vrais dossiers.</div>
     <div id="adminList"></div>
   </section>
+
+  
+<section id="account" class="hidden">
+  <div class="row">
+    <button type="button" class="btn secondary"
+      onclick="show('home')">← Accueil</button>
+  </div>
+
+  <h2 class="section-title">Connexion à mon compte</h2>
+
+  <div class="card">
+    <p id="account-status"></p>
+
+    <form id="account-form">
+      <label for="account-email">Adresse e-mail</label>
+      <input id="account-email" type="email"
+        autocomplete="email" required>
+
+      <label for="account-password">Mot de passe</label>
+      <input id="account-password" type="password"
+        autocomplete="current-password" required>
+
+      <button type="submit" class="btn">
+        Se connecter
+      </button>
+    </form>
+
+    <button type="button" id="account-logout"
+      class="btn secondary" hidden>
+      Se déconnecter
+    </button>
+  </div>
+</section>
+
   <footer>BatiLink — Prototype de démonstration V1 · Données fictives ou locales</footer>
 </main>
 <nav>
@@ -108,7 +147,7 @@
   <button onclick="show('admin')"><strong>⚙</strong>Admin</button>
 </nav>
 <script>
-const sections=['home','request','pro','tracking','admin'];
+const sections=['home','request','pro','tracking','account'];
 function show(id){sections.forEach(s=>document.getElementById(s).classList.toggle('hidden',s!==id));if(id==='tracking'||id==='admin')renderLists();window.scrollTo(0,0)}
 function get(k){try{return JSON.parse(localStorage.getItem('bl_'+k)||'[]')}catch(e){return []}}
 function put(k,v){localStorage.setItem('bl_'+k,JSON.stringify(v))}
