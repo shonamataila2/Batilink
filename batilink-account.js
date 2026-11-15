@@ -59,7 +59,7 @@ function connectAccount(client) {
   });
 
   function renderAccount() {
-    if(accontForm)accountForm.hidden = Boolean(userId);
+if (accountForm) accountForm.hidden = Boolean(userId);
     if(logout)logout.hidden = !userId;
    if(accountStatus) accountStatus.textContent = userId ? 'Tu es connectée.' : 'Connecte-toi ou crée un compte pour retrouver tes demandes sur un autre appareil.';
     if(requestMode)requestMode.textContent = userId ? 'Ta demande sera enregistrée dans ton compte.' : 'Connecte-toi depuis Compte pour enregistrer ta demande.';
