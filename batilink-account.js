@@ -26,6 +26,7 @@ if (configured && window.supabase?.createClient) {
 
 function connectAccount(client) {
   const accountForm = document.getElementById('account-form');
+  
   const logout = document.getElementById('account-logout');
   const online = document.getElementById('online-requests');
   const onlineStatus = document.getElementById('online-status');
