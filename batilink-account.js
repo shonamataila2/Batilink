@@ -241,7 +241,7 @@ function connectAccount(client) {
   }
 
   document.addEventListener('batilink:tracking', refreshRequests);
-
+refreshRequests();
   async function refreshRequests() {
     if (!userId || !onlineStatus || !onlineList) return;
 
