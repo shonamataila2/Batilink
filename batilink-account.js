@@ -4,6 +4,8 @@ const config = window.batilinkConfig ?? {};
 const configured = /^sb_publishable_[A-Za-z0-9_-]+$/.test(config.publishableKey ?? '');
 window.batilinkOnlineRequests = configured;
 
+const accountForm = document.getElementById('account-form');
+
 const accountStatus = document.getElementById('account-status');
 const requestForm = document.getElementById('requestForm');
 const requestMode = document.getElementById('request-mode');
