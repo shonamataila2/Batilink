@@ -184,7 +184,7 @@ function connectAccount(client) {
       const request = {
         id,
         trade: fields.trade,
-        commune: fields.commune,
+        commune: (fields.commune??'').trim(),
         description: (fields.description ?? '').trim(),
         budget: fields.budget === '' ? null : Number(fields.budget),
         start_date: fields.date || null,
