@@ -48,7 +48,10 @@
       <button class="tile" onclick="show('request')"><span class="emoji">🏠</span><b>Je cherche un professionnel</b><span>Déposer une demande de travaux.</span></button>
       <button class="tile" onclick="show('pro')"><span class="emoji">🦺</span><b>Je suis professionnel</b><span>Créer mon dossier entreprise ou artisan.</span></button>
       <button class="tile" onclick="show('tracking')"><span class="emoji">📋</span><b>Suivre un chantier</b><span>Voir les demandes et leur statut de test.</span></button>
-    </div>
+    
+    
+<button class="tile" type="button" onclick="show('annonces-pro')">🔎 Consulter les annonces</button>
+</div>
     <h2 class="section-title">Comment ça marche ?</h2>
     <div class="card"><b>1. Décrivez vos travaux</b><p class="muted">Indiquez le métier, la commune, votre projet et ajoutez vos photos lors de la prochaine version connectée.</p></div>
     <div class="card"><b>2. Recevez des propositions</b><p class="muted">Les professionnels correspondant au métier et à la zone pourront répondre.</p></div>
@@ -117,6 +120,9 @@
 
 <section id="annonces-pro" class="hidden">
   <h2 class="section-title">Annonces disponibles pour les professionnels</h2>
+  
+<button type="button" class="btn secondary" onclick="show('home')">← Retour à l'accueil</button>
+
   <p id="annonces-status" role="status">Chargement des annonces...</p>
   <div id="annonces-professionnelles"></div>
 </section>
