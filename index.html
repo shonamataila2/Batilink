@@ -175,6 +175,68 @@ document.getElementById('requestForm').addEventListener('submit', e => {
   show('tracking');
 });
 
+window.batilinkProfessionalOnline = true;
+
+document.getElementById('proForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  event.stopImmediatePropagation();
+
+  const form = event.currentTarget;
+  const button = form.querySelector('button[type="submit"]');
+  const config = window.batilinkConfig;
+
+  if (!config?.url || !config?.publishableKey || !window.supabase) {
+    alert('Connexion Supabase indisponible.');
+    return;
+  }
+
+  const client = window.supabase.createClient(
+    config.url,
+    config.publishableKey
+  );
+
+  const { data: { user }, error: authError } =
+    await client.auth.getUser();
+
+  if (authError || !user) {
+    alert('Connecte-toi à ton compte avant de déposer ton dossier.');
+    show('account');
+    return;
+  }
+
+  const fields = Object.fromEntries(new FormData(form));
+  const dossier = {
+    user_id: user.id,
+    kind: fields.kind,
+    company: fields.company,
+    ridet: fields.ridet,
+    owner: fields.owner,
+    phone: fields.phone,
+    email: fields.email,
+    trade: fields.trade,
+    areas: fields.areas,
+    insurance: fields.insurance
+  };
+
+  button.disabled = true;
+
+  try {
+    const { error } = await client
+      .from('batilink_professionals')
+      .upsert(dossier, { onConflict: 'user_id' });
+
+    if (error) throw error;
+
+    alert('Dossier professionnel enregistré en ligne.');
+    form.reset();
+  } catch (error) {
+    console.error(error);
+    alert('Enregistrement impossible : ' + error.message);
+  } finally {
+    button.disabled = false;
+  }
+}, { capture: true });
+
 document.getElementById('proForm').addEventListener('submit',e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));d.id=Date.now();d.status='En attente de vérification';put('pros',[d,...get('pros')]);e.target.reset();alert('Dossier de démonstration enregistré sur cet appareil. Aucun contrôle officiel n’a été effectué.');show('tracking')});
 function renderLists(){
  const rs=get('requests'),ps=get('pros');
