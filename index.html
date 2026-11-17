@@ -87,8 +87,33 @@
       <label>Nom du responsable *</label><input name="owner" required>
       <label>Téléphone *</label><input name="phone" type="tel" required>
       <label>E-mail *</label><input name="email" type="email" required>
-      <label>Métier principal *</label><select name="trade" required><option value="">Choisir</option><option>Gros œuvre / Maçonnerie</option><option>VRD / Terrassement</option><option>Construction générale</option><option>Électricité</option><option>Plomberie / Sanitaire</option><option>Climatisation / Ventilation</option><option>Charpente / Couverture</option><option>Menuiserie</option><option>Peinture / Revêtements</option><option>Étanchéité</option><option>Aménagement extérieur</option><option>Architecte / Bureau d'études</option></select>
-      <label>Communes d'intervention</label><input name="areas" placeholder="Ex. Nouméa, Dumbéa, Païta">
+     
+<label>Métiers exercés * (Ctrl + clic pour choisir plusieurs métiers)</label>
+<select name="trade" multiple size="7" required>
+  <option value="Gros œuvre / Maçonnerie">Gros œuvre / Maçonnerie</option>
+  <option value="VRD / Terrassement">VRD / Terrassement</option>
+  <option value="Assainissement">Assainissement</option>
+  <option value="Plomberie">Plomberie</option>
+  <option value="Électricité">Électricité</option>
+  <option value="Peinture">Peinture</option>
+  <option value="Charpente / Couverture">Charpente / Couverture</option>
+  <option value="Menuiserie">Menuiserie</option>
+  <option value="Carrelage">Carrelage</option>
+</select>
+
+     
+<label>Communes d'intervention * (Ctrl + clic pour choisir plusieurs communes)</label>
+<select name="areas" multiple size="7" required>
+  <option value="Nouméa">Nouméa</option>
+  <option value="Dumbéa">Dumbéa</option>
+  <option value="Païta">Païta</option>
+  <option value="Mont-Dore">Mont-Dore</option>
+  <option value="Boulouparis">Boulouparis</option>
+  <option value="La Foa">La Foa</option>
+  <option value="Bourail">Bourail</option>
+  <option value="Yaté">Yaté</option>
+</select>
+
       <label>Assurance professionnelle</label><select name="insurance"><option>À fournir lors de la vérification</option><option>Attestation disponible</option><option>À vérifier selon mon activité</option></select>
       <button class="btn full" type="submit">Envoyer mon dossier de test</button>
     </form>
@@ -224,6 +249,10 @@ document.getElementById('proForm').addEventListener('submit', async (event) => {
   }
 
   const fields = Object.fromEntries(new FormData(form));
+  
+const metiers = new FormData(form).getAll("trade");
+const communes = new FormData(form).getAll("areas");
+
   const dossier = {
     user_id: user.id,
     kind: fields.kind,
@@ -232,8 +261,12 @@ document.getElementById('proForm').addEventListener('submit', async (event) => {
     owner: fields.owner,
     phone: fields.phone,
     email: fields.email,
-    trade: fields.trade,
-    areas: fields.areas,
+   
+trade: metiers[0],
+areas: communes.join(", "),
+trades: metiers,
+service_communes: communes,
+
     insurance: fields.insurance
   };
 
