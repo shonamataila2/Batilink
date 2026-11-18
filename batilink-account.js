@@ -324,7 +324,7 @@ refreshRequests();
       const { data, error } = await client
         .from('batilink_requests')
         .select(remoteFields)
-        .order('created_at', { ascending: false });
+        .eq('user_id', userId).order('created_at', { ascending: false });
 
       if (version !== refreshVersion) return;
       if (error) throw error;
