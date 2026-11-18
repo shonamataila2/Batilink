@@ -288,3 +288,53 @@ refreshRequests();
     }
   }
 }
+
+async function chargerDemandesProfessionnelles() {
+  const liste = document.getElementById('matching-list');
+  if (!liste) return;
+
+  liste.textContent = 'Chargement des demandes...';
+
+  try {
+    const config = window.batilinkConfig;
+    if (!config?.url || !config?.publishableKey ||
+        !window.supabase?.createClient) {
+      throw new Error('Connexion indisponible');
+    }
+
+    const client = window.supabase.createClient(
+      config.url,
+      config.publishableKey
+    );
+
+    const { data, error } = await client.rpc(
+      'batilink_matching_requests'
+    );
+
+    if (error) throw error;
+
+    liste.replaceChildren();
+
+    if (!data?.length) {
+      liste.textContent = 'Aucune demande correspondante.';
+      return;
+    }
+
+    for (const demande of data) {
+      const carte = document.createElement('article');
+      carte.className = 'card';
+
+      for (const champ of ['trade', 'commune', 'description']) {
+        const texte = document.createElement('p');
+        texte.textContent = demande[champ] ?? '';
+        carte.append(texte);
+      }
+
+      liste.append(carte);
+    }
+  } catch (erreur) {
+    liste.textContent = 'Impossible de charger les demandes.';
+    console.error(erreur);
+  }
+}
+
