@@ -75,6 +75,44 @@ if (forgotPassword) {
   });
 }
 
+
+  
+  const resetForm = document.getElementById('reset-password-form');
+  const resetStatus = document.getElementById('reset-password-status');
+
+  if (resetForm) {
+    client.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        resetForm.hidden = false;
+        show('account');
+      }
+    });
+
+    resetForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const password = document.getElementById('new-password').value;
+      const button = resetForm.querySelector('button[type="submit"]');
+
+      button.disabled = true;
+      resetStatus.textContent = 'Enregistrement en cours...';
+
+      try {
+        const { error } = await client.auth.updateUser({ password });
+        if (error) throw error;
+
+        resetStatus.textContent = 'Mot de passe modifié avec succès.';
+        resetForm.reset();
+        resetForm.hidden = true;
+      } catch (error) {
+        console.error(error);
+        resetStatus.textContent = 'Modification impossible. Demande un nouveau lien.';
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
+
   client.auth.onAuthStateChange((event, session) => {
     const nextUser = session?.user?.id ?? null;
 
