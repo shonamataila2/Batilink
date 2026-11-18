@@ -198,7 +198,8 @@ if (forgotPassword) {
           accountStatus.textContent =
             'Si l’inscription est disponible pour cette adresse, un e-mail de confirmation t’a été envoyé. Ouvre son lien puis connecte-toi.';
         }
-      } catch {
+      } catch (error) {
+        console.error('Erreur authentification BatiLink :', error);
         if (accountStatus) {
           accountStatus.textContent = signup
             ? 'Inscription indisponible. Vérifie ton adresse et réessaie.'
