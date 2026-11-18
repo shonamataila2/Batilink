@@ -42,6 +42,39 @@ function connectAccount(client) {
 
   renderAccount();
 
+const forgotPassword = document.getElementById('forgot-password');
+
+if (forgotPassword) {
+  forgotPassword.addEventListener('click', async () => {
+    const email = document.getElementById('account-email').value.trim();
+
+    if (!email) {
+      accountStatus.textContent = 'Entre ton adresse e-mail.';
+      return;
+    }
+
+    forgotPassword.disabled = true;
+    accountStatus.textContent = 'Envoi du lien en cours...';
+
+    try {
+      const { error } = await client.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + window.location.pathname
+      });
+
+      if (error) throw error;
+
+      accountStatus.textContent =
+        'Si cette adresse possède un compte, un lien de réinitialisation sera envoyé.';
+    } catch (error) {
+      console.error(error);
+      accountStatus.textContent =
+        "Impossible d'envoyer le lien pour le moment.";
+    } finally {
+      forgotPassword.disabled = false;
+    }
+  });
+}
+
   client.auth.onAuthStateChange((event, session) => {
     const nextUser = session?.user?.id ?? null;
 
