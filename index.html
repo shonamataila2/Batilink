@@ -81,7 +81,7 @@
     <h2 class="section-title">Créer un dossier professionnel</h2>
     <div class="notice">Les documents officiels, contrôles RIDET et assurances seront gérés dans la version sécurisée. Ne transmettez pas de documents sensibles dans ce prototype.</div>
     <form id="proForm" class="card">
-      <label>Type de professionnel *</label><select name="kind" required><option value="">Choisir</option><option>Entreprise</option><option>Artisan indépendant patenté</option></select>
+      <label>Statue du professionnel *</label><select name="kind" required><option value="">Choisir</option><option>Entreprise</option><option>Artisan indépendant patenté</option></select>
       <label>Nom commercial / Nom de l'artisan *</label><input name="company" required>
       <label>Numéro RIDET *</label><input name="ridet" required>
       <label>Nom du responsable *</label><input name="owner" required>
@@ -92,8 +92,8 @@
 <input name="home_commune" type="text" required placeholder="Ex. : Dumbéa">
 
 
-<label>Métiers exercés * (2 métiers gratuits maximum — Ctrl + clic pour sélectionner)</label>
-
+<label>Métiers déclarés de l'entreprise * (2 métiers inclus gratuitement – Ctrl + clic pour sélectionner)</label>
+<p class="muted">Choisissez vos 2 métiers principaux. Un abonnement permettra d'ajouter des métiers supplémentaires.</p>
 <select name="trade" multiple size="7" required>
   <option value="Gros œuvre / Maçonnerie">Gros œuvre / Maçonnerie</option>
   <option value="VRD / Terrassement">VRD / Terrassement</option>
@@ -107,7 +107,7 @@
 </select>
 
      
-<label>Communes d'intervention * (Ctrl + clic pour choisir plusieurs communes)</label>
+<label>Zones d'intervention * (Ctrl + clic pour choisir plusieurs communes)</label>
 <select name="areas" multiple size="7" required>
   <option value="Nouméa">Nouméa</option>
   <option value="Dumbéa">Dumbéa</option>
