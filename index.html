@@ -28,6 +28,46 @@
     .status{font-size:12px;font-weight:750}.pending{color:#99620a}.approved{color:#17734e}.rejected{color:#a43131}
     footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
     @media(min-width:620px){header{padding:24px max(24px,calc((100% - 720px)/2)) 28px}.grid{grid-template-columns:repeat(3,1fr)}main{padding-top:24px}}
+    
+/* BatiLink - Cartes des métiers */
+.trade-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0 20px;
+}
+
+.trade-grid label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 14px;
+  background: #f6faf8;
+  border: 1px solid #dce5e1;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.trade-grid label:has(input:checked) {
+  background: #e6f1ed;
+  border-color: #173c35;
+}
+
+.trade-grid input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: #173c35;
+}
+
+@media (max-width: 600px) {
+  .trade-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -94,30 +134,33 @@
 
 <label>Métiers déclarés de l'entreprise * (2 métiers inclus gratuitement – Ctrl + clic pour sélectionner)</label>
 <p class="muted">Choisissez vos 2 métiers principaux. Un abonnement permettra d'ajouter des métiers supplémentaires.</p>
-<select name="trade" multiple size="7" required>
-  <option value="Gros œuvre / Maçonnerie">Gros œuvre / Maçonnerie</option>
-  <option value="VRD / Terrassement">VRD / Terrassement</option>
-  <option value="Assainissement">Assainissement</option>
-  <option value="Plomberie">Plomberie</option>
-  <option value="Électricité">Électricité</option>
-  <option value="Peinture">Peinture</option>
-  <option value="Charpente / Couverture">Charpente / Couverture</option>
-  <option value="Menuiserie">Menuiserie</option>
-  <option value="Carrelage">Carrelage</option>
-</select>
+
+<div class="trade-grid">
+  <label><input type="checkbox" name="trade" value="Gros œuvre / Maçonnerie"> Gros œuvre / Maçonnerie</label>
+  <label><input type="checkbox" name="trade" value="VRD / Terrassement"> VRD / Terrassement</label>
+  <label><input type="checkbox" name="trade" value="Assainissement"> Assainissement</label>
+  <label><input type="checkbox" name="trade" value="Plomberie"> Plomberie</label>
+  <label><input type="checkbox" name="trade" value="Électricité"> Électricité</label>
+  <label><input type="checkbox" name="trade" value="Peinture"> Peinture</label>
+  <label><input type="checkbox" name="trade" value="Charpente / Couverture"> Charpente / Couverture</label>
+  <label><input type="checkbox" name="trade" value="Menuiserie"> Menuiserie</label>
+  <label><input type="checkbox" name="trade" value="Carrelage"> Carrelage</label>
+</div>
+
 
      
-<label>Zones d'intervention * (Ctrl + clic pour choisir plusieurs communes)</label>
-<select name="areas" multiple size="7" required>
-  <option value="Nouméa">Nouméa</option>
-  <option value="Dumbéa">Dumbéa</option>
-  <option value="Païta">Païta</option>
-  <option value="Mont-Dore">Mont-Dore</option>
-  <option value="Boulouparis">Boulouparis</option>
-  <option value="La Foa">La Foa</option>
-  <option value="Bourail">Bourail</option>
-  <option value="Yaté">Yaté</option>
-</select>
+
+<div class="trade-grid">
+  <label><input type="checkbox" name="areas" value="Nouméa"> Nouméa</label>
+  <label><input type="checkbox" name="areas" value="Dumbéa"> Dumbéa</label>
+  <label><input type="checkbox" name="areas" value="Païta"> Païta</label>
+  <label><input type="checkbox" name="areas" value="Mont-Dore"> Mont-Dore</label>
+  <label><input type="checkbox" name="areas" value="Boulouparis"> Boulouparis</label>
+  <label><input type="checkbox" name="areas" value="La Foa"> La Foa</label>
+  <label><input type="checkbox" name="areas" value="Bourail"> Bourail</label>
+  <label><input type="checkbox" name="areas" value="Yaté"> Yaté</label>
+</div>
+
 
       <label>Assurance professionnelle</label><select name="insurance"><option>À fournir lors de la vérification</option><option>Attestation disponible</option><option>À vérifier selon mon activité</option></select>
       <button class="btn full" type="submit">Envoyer mon dossier de test</button>
@@ -285,6 +328,12 @@ if (metiers.length > 2) {
 }
 
 const communes = new FormData(form).getAll("areas");
+  
+if (communes.length === 0) {
+  alert("Veuillez sélectionner au moins une commune d'intervention.");
+  return;
+}
+
 
   const dossier = {
     user_id: user.id,
