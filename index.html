@@ -387,6 +387,19 @@ function esc(v){return String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
  
+<script>
+document.querySelectorAll('input[name="trade"]').forEach(caseMetier => {
+  caseMetier.addEventListener('change', function () {
+    const selection = document.querySelectorAll('input[name="trade"]:checked');
+
+    if (selection.length > 2) {
+      this.checked = false;
+      alert("Vous pouvez sélectionner 2 métiers gratuits maximum.");
+    }
+  });
+});
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="batilink-config.js"></script>
 <script src="batilink-account.js"></script>
