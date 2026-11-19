@@ -132,7 +132,7 @@
 <input name="home_commune" type="text" required placeholder="Ex. : Dumbéa">
 
 
-<label>Métiers déclarés de l'entreprise * (2 métiers inclus gratuitement – Ctrl + clic pour sélectionner)</label>
+<label>Métiers déclarés de l'entreprise * (2 métiers inclus gratuitement – Cochez vos métiers principaux)</label>
 <p class="muted">Choisissez vos 2 métiers principaux. Un abonnement permettra d'ajouter des métiers supplémentaires.</p>
 
 
@@ -147,6 +147,7 @@
   <label><input type="checkbox" name="trade" value="Charpente / Couverture"> Charpente / Couverture</label>
   <label><input type="checkbox" name="trade" value="Menuiserie"> Menuiserie</label>
   <label><input type="checkbox" name="trade" value="Carrelage"> Carrelage</label>
+  <label><input type="checkbox" name="trade" value="Espaces verts / Entretien paysager"> Espaces verts / Entretien paysager</label>
 </div>
 
 
@@ -328,7 +329,7 @@ document.getElementById('proForm').addEventListener('submit', async (event) => {
 const metiers = new FormData(form).getAll("trade");
   
 if (metiers.length > 2) {
-  alert("Vous pouvez sélectionner 2 métiers gratuits maximum. Un abonnement sera nécessaire pour ajouter un troisième métier.");
+  alert("Vous avez atteint la limite de 2 métiers gratuits. L’ajout de métiers supplémentaires sera bientôt disponible avec un abonnement BatiLink.");
   return;
 }
 
@@ -394,7 +395,7 @@ document.querySelectorAll('input[name="trade"]').forEach(caseMetier => {
 
     if (selection.length > 2) {
       this.checked = false;
-      alert("Vous pouvez sélectionner 2 métiers gratuits maximum.");
+      alert("Vous avez atteint la limite de 2 métiers gratuits. L’ajout de métiers supplémentaires sera bientôt disponible avec un abonnement BatiLink.")
     }
   });
 });
