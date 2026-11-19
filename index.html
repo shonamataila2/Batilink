@@ -91,7 +91,9 @@
 <label>Commune principale de l'entreprise *</label>
 <input name="home_commune" type="text" required placeholder="Ex. : Dumbéa">
 
-<label>Métiers exercés * (Ctrl + clic pour choisir plusieurs métiers)</label>
+
+<label>Métiers exercés * (2 métiers gratuits maximum — Ctrl + clic pour sélectionner)</label>
+
 <select name="trade" multiple size="7" required>
   <option value="Gros œuvre / Maçonnerie">Gros œuvre / Maçonnerie</option>
   <option value="VRD / Terrassement">VRD / Terrassement</option>
@@ -276,6 +278,12 @@ document.getElementById('proForm').addEventListener('submit', async (event) => {
   const fields = Object.fromEntries(new FormData(form));
   
 const metiers = new FormData(form).getAll("trade");
+  
+if (metiers.length > 2) {
+  alert("Vous pouvez sélectionner 2 métiers gratuits maximum. Un abonnement sera nécessaire pour ajouter un troisième métier.");
+  return;
+}
+
 const communes = new FormData(form).getAll("areas");
 
   const dossier = {
