@@ -88,6 +88,9 @@
       <label>Téléphone *</label><input name="phone" type="tel" required>
       <label>E-mail *</label><input name="email" type="email" required>
      
+<label>Commune principale de l'entreprise *</label>
+<input name="home_commune" type="text" required placeholder="Ex. : Dumbéa">
+
 <label>Métiers exercés * (Ctrl + clic pour choisir plusieurs métiers)</label>
 <select name="trade" multiple size="7" required>
   <option value="Gros œuvre / Maçonnerie">Gros œuvre / Maçonnerie</option>
@@ -283,7 +286,7 @@ const communes = new FormData(form).getAll("areas");
     owner: fields.owner,
     phone: fields.phone,
     email: fields.email,
-   
+home_commune: (fields.home_commune || '').trim(),
 trade: metiers[0],
 areas: communes.join(", "),
 trades: metiers,
