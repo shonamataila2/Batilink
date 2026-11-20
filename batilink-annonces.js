@@ -41,17 +41,35 @@ if (!client) {
         return;
       }
 
-      const { data: professionnel, error: proError } =
-        await client
-          .from("batilink_professionals")
-          .select("id")
-          .eq("user_id", session.user.id)
-          .maybeSingle();
+     
+const { data: professionnel, error: proError } =
+  await client
+    .from("batilink_professionals")
+    .select("id,status")
+    .eq("user_id", session.user.id)
+    .maybeSingle();
 
-      if (proError || !professionnel) {
-        afficherMessage("Espace réservé aux professionnels inscrits.");
-        return;
-      }
+if (proError) {
+  console.error("Erreur dossier professionnel :", proError);
+  afficherMessage("Impossible de vérifier votre dossier pour le moment.");
+  return;
+}
+
+if (!professionnel) {
+  afficherMessage("Aucun dossier professionnel associé à ce compte.");
+  return;
+}
+
+if (professionnel.status === "pending") {
+  afficherMessage("Votre dossier professionnel est en attente de validation.");
+  return;
+}
+
+if (professionnel.status !== "verified") {
+  afficherMessage("Votre dossier professionnel n'est pas autorisé à consulter les annonces.");
+  return;
+}
+
 
       const { data: annonces, error } = await client
        
