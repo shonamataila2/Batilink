@@ -130,6 +130,20 @@ changePasswordButton.addEventListener('click', async () => {
         resetStatus.textContent = 'Mot de passe modifié avec succès.';
         resetForm.reset();
         resetForm.hidden = true;
+        
+let message = document.getElementById('password-success');
+
+if (!message) {
+  message = document.createElement('p');
+  message.id = 'password-success';
+  message.className = 'notice';
+  message.setAttribute('role', 'status');
+  document.getElementById('home').prepend(message);
+}
+
+message.textContent = 'Mot de passe modifié avec succès !';
+show('home');
+
       } catch (error) {
         console.error(error);
         resetStatus.textContent = 'Modification impossible. Demande un nouveau lien.';
