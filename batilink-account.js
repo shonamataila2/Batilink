@@ -13,7 +13,13 @@ const requestStatus = document.getElementById('request-status');
 const requestButton = requestForm?.querySelector('button[type="submit"]');
 
 if (configured && window.supabase?.createClient) {
-  connectAccount(window.supabase.createClient(config.url, config.publishableKey));
+ 
+window.batilinkClient = window.supabase.createClient(
+  config.url,
+  config.publishableKey
+);
+connectAccount(window.batilinkClient);
+
 } else if (configured) {
   const message = 'La connexion est indisponible. Actualise la page et réessaie.';
   if (accountStatus) accountStatus.textContent = message;
