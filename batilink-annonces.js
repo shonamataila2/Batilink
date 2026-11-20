@@ -24,10 +24,14 @@
         return;
       }
 
-      const client = window.supabase.createClient(
-        config.url,
-        config.publishableKey
-      );
+     
+const client = window.batilinkClient;
+
+if (!client) {
+  afficherMessage("Connexion Supabase indisponible.");
+  return;
+}
+
 
       const { data: session, error: authError } =
         await client.auth.getUser();
