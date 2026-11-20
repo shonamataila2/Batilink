@@ -233,6 +233,27 @@ show('home');
         if (error) throw error;
 
         accountForm.reset();
+        
+if (!signup && data?.session?.user) {
+  const home = document.getElementById('home');
+
+  if (home) {
+    document.getElementById('login-success')?.remove();
+
+    const notice = document.createElement('p');
+    notice.id = 'login-success';
+    notice.className = 'notice';
+    notice.setAttribute('role', 'status');
+    notice.textContent =
+      'Connexion réussie. Bienvenue sur BatiLink !';
+
+    home.prepend(notice);
+    setTimeout(() => notice.remove(), 6000);
+  }
+
+  show('home');
+}
+
 
         if (signup && !data.session && accountStatus) {
           accountStatus.textContent =
