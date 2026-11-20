@@ -50,7 +50,9 @@
       }
 
       const { data: annonces, error } = await client
-        .from("batilink_annonces")
+       
+.rpc("batilink_matching_requests")
+
         .select("id,trade,commune,description,budget,start_date")
         .order("created_at", { ascending: false });
 
