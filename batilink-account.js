@@ -81,12 +81,38 @@ if (forgotPassword) {
   const resetStatus = document.getElementById('reset-password-status');
 
   if (resetForm) {
-    client.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        resetForm.hidden = false;
-        show('account');
-      }
-    });
+  
+const changePasswordButton = document.createElement('button');
+changePasswordButton.type = 'button';
+changePasswordButton.className = 'btn secondary';
+changePasswordButton.textContent = 'Définir un nouveau mot de passe';
+changePasswordButton.hidden = true;
+logout?.before(changePasswordButton);
+
+client.auth.onAuthStateChange((event, session) => {
+  changePasswordButton.hidden = !session?.user;
+
+  if (event === 'PASSWORD_RECOVERY') {
+    resetForm.hidden = false;
+    show('account');
+  }
+});
+
+changePasswordButton.addEventListener('click', async () => {
+  const { data, error } = await client.auth.getUser();
+
+  if (error || !data?.user) {
+    accountStatus.textContent = 'Session expirée. Demande un nouveau lien.';
+    return;
+  }
+
+  const email = data.user.email;
+  if (!confirm(`Modifier le mot de passe du compte ${email} ?`)) return;
+
+  resetForm.hidden = false;
+  show('account');
+});
+
 
     resetForm.addEventListener('submit', async (event) => {
       event.preventDefault();
