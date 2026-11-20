@@ -53,8 +53,8 @@
        
 .rpc("batilink_matching_requests")
 
-        .select("id,trade,commune,description,budget,start_date")
-        .order("created_at", { ascending: false });
+
+.select("id,trade,commune,description,budget,start_date");
 
       if (error) throw error;
 
