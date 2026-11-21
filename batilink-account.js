@@ -93,7 +93,9 @@ changePasswordButton.type = 'button';
 changePasswordButton.className = 'btn secondary';
 changePasswordButton.textContent = 'Définir un nouveau mot de passe';
 changePasswordButton.hidden = true;
-logout?.before(changePasswordButton);
+
+resetForm.before(changePasswordButton);
+
 
 client.auth.onAuthStateChange((event, session) => {
   changePasswordButton.hidden = !session?.user;
