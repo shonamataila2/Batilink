@@ -16,6 +16,7 @@
   }
 
   async function chargerAnnonces() {
+    zone.replaceChildren();
     try {
       const config = window.batilinkConfig;
 
@@ -117,6 +118,15 @@ if (professionnel.status !== "verified") {
       afficherMessage("Impossible de charger les annonces.");
     }
   }
+const authClient = window.batilinkClient;
 
+if (authClient) {
+  authClient.auth.onAuthStateChange((event) => {
+    if (event === "SIGNED_OUT") {
+      zone.replaceChildren();
+      afficherMessage("Connectez-vous pour consulter les annonces.");
+    }
+  });
+}
   chargerAnnonces();
 })();
