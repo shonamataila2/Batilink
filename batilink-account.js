@@ -91,7 +91,9 @@ if (forgotPassword) {
 const changePasswordButton = document.createElement('button');
 changePasswordButton.type = 'button';
 changePasswordButton.className = 'btn secondary';
-changePasswordButton.textContent = 'Définir un nouveau mot de passe';
+
+changePasswordButton.textContent = 'Modifier mon mot de passe';
+
 changePasswordButton.hidden = true;
 
 resetForm.before(changePasswordButton);
