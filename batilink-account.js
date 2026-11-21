@@ -190,8 +190,9 @@ show('home');
     if (accountStatus) {
       accountStatus.textContent = userId
         ? 'Tu es connectée.'
-        : 'Connecte-toi ou crée un compte pour retrouver tes demandes sur un autre appareil.';
-    }
+           : 'Connecte-toi ou crée un compte pour retrouver tes demandes sur un autre appareil.';
+  accountStatus.style.color = userId ? '#16a34a' : '';
+}
 
     if (requestMode) {
       requestMode.textContent = userId
