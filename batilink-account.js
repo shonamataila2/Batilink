@@ -122,6 +122,19 @@ changePasswordButton.addEventListener('click', async () => {
   resetForm.hidden = false;
   show('account');
 });
+   
+const cancelPasswordButton = document.createElement('button');
+cancelPasswordButton.type = 'button';
+cancelPasswordButton.className = 'btn secondary';
+cancelPasswordButton.textContent = 'Annuler';
+resetForm.appendChild(cancelPasswordButton);
+
+cancelPasswordButton.addEventListener('click', () => {
+  resetForm.reset();
+  resetForm.hidden = true;
+  resetStatus.textContent = '';
+});
+
 
 
     resetForm.addEventListener('submit', async (event) => {
