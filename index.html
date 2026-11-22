@@ -268,6 +268,10 @@
 </form>
 
 
+<button id="view-pro-profile" type="button" class="btn secondary hidden">Voir mon profil professionnel</button>
+
+<div id="pro-profile-details" class="card hidden" aria-live="polite"></div>
+
    
   </div>
 </section>
@@ -412,6 +416,89 @@ document.querySelectorAll('input[name="trade"]').forEach(caseMetier => {
 <script src="batilink-account.js"></script>
   
 <script src="batilink-annonces.js"></script>
+
+<script>
+(() => {
+  const client = window.batilinkClient;
+  const button = document.getElementById('view-pro-profile');
+  const details = document.getElementById('pro-profile-details');
+
+  if (!client || !button || !details) return;
+
+  let version = 0;
+
+  function resetProfile() {
+    version++;
+    button.classList.add('hidden');
+    details.classList.add('hidden');
+    details.replaceChildren();
+  }
+
+  client.auth.onAuthStateChange((_event, session) => {
+    resetProfile();
+    if (session?.user) button.classList.remove('hidden');
+  });
+
+  client.auth.getUser().then(({ data, error }) => {
+    if (!error && data?.user) button.classList.remove('hidden');
+  });
+
+  button.addEventListener('click', async () => {
+    const currentVersion = version;
+    details.classList.remove('hidden');
+    details.textContent = 'Chargement du profil...';
+
+    try {
+      const { data: auth, error: authError } =
+        await client.auth.getUser();
+
+      if (currentVersion !== version) return;
+      if (authError || !auth?.user) {
+        resetProfile();
+        return;
+      }
+
+      const { data: profile, error } = await client
+        .from('batilink_professionals')
+        .select('company,ridet,owner,phone,email,trade,areas,insurance,status')
+        .eq('user_id', auth.user.id)
+        .maybeSingle();
+
+      if (currentVersion !== version) return;
+      if (error) throw error;
+
+      if (!profile) {
+        details.textContent = 'Aucun dossier professionnel associé à ce compte.';
+        return;
+      }
+
+      const fields = {
+        Entreprise: profile.company,
+        RIDET: profile.ridet,
+        Responsable: profile.owner,
+        Téléphone: profile.phone,
+        Email: profile.email,
+        Métier: profile.trade,
+        Communes: profile.areas,
+        Assurance: profile.insurance,
+        Statut: profile.status
+      };
+
+      details.replaceChildren();
+
+      Object.entries(fields).forEach(([label, value]) => {
+        const line = document.createElement('p');
+        line.textContent = `${label} : ${value ?? 'Non renseigné'}`;
+        details.appendChild(line);
+      });
+    } catch (error) {
+      if (currentVersion === version) {
+        details.textContent = 'Lecture du profil impossible.';
+      }
+    }
+  });
+})();
+</script>
 
 </body>
 </html>
