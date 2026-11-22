@@ -255,6 +255,9 @@
     <h2 class="section-title">Validation des professionnels</h2>
     <div class="notice">Espace de démonstration sans connexion ni protection administrateur. Ne l'utilisez pas pour traiter de vrais dossiers.</div>
     <div id="adminList"></div>
+    
+<div id="admin-change-requests" class="card hidden" aria-live="polite"></div>
+
   </section>
 
 
@@ -342,11 +345,15 @@
   <button onclick="show('request')"><strong>＋</strong>Demande</button>
   <button onclick="show('pro')"><strong>♙</strong>Professionnel</button>
   <button onclick="show('tracking')"><strong>▤</strong>Suivi</button>
-  <button onclick="show('admin')"><strong>⚙</strong>Admin</button>
+  
+<button type="button" id="admin-nav" class="hidden" onclick="show('admin')">
+<strong>⚙</strong>Admin</button>
 </nav>
 <script>
 
-const sections=['home','request','pro','tracking','account','annonces-pro'];
+
+const sections=['home','request','pro','tracking','account','annonces-pro','admin'];
+
 
 function show(id){sections.forEach(s=>document.getElementById(s).classList.toggle('hidden',s!==id));if(id==='tracking'||id==='admin')renderLists();window.scrollTo(0,0)}
 function get(k){try{return JSON.parse(localStorage.getItem('bl_'+k)||'[]')}catch(e){return []}}
@@ -451,7 +458,7 @@ function renderLists(){
  const rs=get('requests'),ps=get('pros');
  document.getElementById('requestsList').innerHTML=rs.length?rs.map(x=>`<div class="card"><b>${esc(x.trade)}</b><p class="muted">${esc(x.commune)} · ${esc(x.name)}</p><p>${esc(x.description)}</p><span class="pill">${esc(x.status)}</span></div>`).join(''):'<p class="muted">Aucune demande enregistrée.</p>';
  const prosHtml=ps.length?ps.map(x=>`<div class="card"><b>${esc(x.company)}</b><p class="muted">${esc(x.kind)} · RIDET : ${esc(x.ridet)} · ${esc(x.trade)}</p><span class="status pending">${esc(x.status)}</span></div>`).join(''):'<p class="muted">Aucun dossier professionnel.</p>';
- document.getElementById('prosList').innerHTML=prosHtml;document.getElementById('adminList').innerHTML=prosHtml;
+ document.getElementById('prosList').innerHTML=prosHtml;
 }
 function esc(v){return String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
@@ -706,6 +713,85 @@ document.querySelectorAll('input[name="trade"]').forEach(caseMetier => {
       }
     });
   });
+})();
+</script>
+
+<script>
+(() => {
+  const client = window.batilinkClient;
+  const button = document.getElementById('admin-nav');
+  const panel = document.getElementById('admin-change-requests');
+
+  if (!client || !button || !panel) return;
+
+  let version = 0;
+
+  async function chargerAdmin() {
+    const current = ++version;
+    button.classList.add('hidden');
+    panel.classList.add('hidden');
+    panel.replaceChildren();
+
+    const { data: auth, error: authError } =
+      await client.auth.getUser();
+
+    if (current !== version || authError || !auth?.user) return;
+
+    const { data: admin, error: adminError } =
+      await client.rpc('batilink_is_admin');
+
+    if (current !== version || adminError || admin !== true) return;
+
+    button.classList.remove('hidden');
+    panel.classList.remove('hidden');
+
+    const titre = document.createElement('h3');
+    titre.textContent = 'Demandes de modification en attente';
+    panel.appendChild(titre);
+
+    const { data: demandes, error } =
+      await client.rpc('batilink_admin_pending_changes');
+
+    if (current !== version) return;
+
+    if (error) {
+      const message = document.createElement('p');
+      message.textContent = 'Chargement des demandes impossible.';
+      panel.appendChild(message);
+      return;
+    }
+
+    const liste = demandes ?? [];
+
+    if (liste.length === 0) {
+      const vide = document.createElement('p');
+      vide.textContent = 'Aucune demande en attente.';
+      panel.appendChild(vide);
+      return;
+    }
+
+    liste.forEach(demande => {
+      const carte = document.createElement('div');
+      carte.className = 'card';
+
+      const entreprise = document.createElement('h3');
+      entreprise.textContent = demande.company || 'Entreprise';
+
+      const modifications = document.createElement('p');
+      modifications.textContent =
+        'Modifications demandées : ' +
+        JSON.stringify(demande.proposed_changes ?? {});
+
+      carte.append(entreprise, modifications);
+      panel.appendChild(carte);
+    });
+  }
+
+  client.auth.onAuthStateChange(() => {
+    setTimeout(chargerAdmin, 0);
+  });
+
+  chargerAdmin();
 })();
 </script>
 
