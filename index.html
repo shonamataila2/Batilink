@@ -335,6 +335,80 @@
 <div id="pro-profile-details" class="card hidden" aria-live="polite"></div>
 <div id="pro-change-panel" class="card hidden" aria-live="polite"></div>
 
+<div id="pro-change-history" class="card hidden"></div>
+
+<script>
+window.addEventListener('load', () => {
+  const client = window.batilinkClient;
+  const box = document.getElementById('pro-change-history');
+  if (!client || !box) return;
+
+  let version = 0;
+
+  async function chargerHistorique() {
+    const current = ++version;
+    box.replaceChildren();
+    box.classList.add('hidden');
+
+    const auth = await client.auth.getUser();
+    const user = auth.data?.user;
+    if (current !== version || !user) return;
+
+    const { data, error } = await client
+      .from('batilink_professional_change_requests')
+      .select('status,proposed_changes,review_note,created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (current !== version || error || !data?.length) return;
+
+    const titre = document.createElement('h3');
+    titre.textContent = 'Historique de mes demandes';
+    box.appendChild(titre);
+
+    const statuts = {
+      pending: 'En attente',
+      approved: 'Acceptée',
+      rejected: 'Refusée'
+    };
+
+    data.forEach(d => {
+      const ligne = document.createElement('div');
+      ligne.className = 'card';
+
+      const texte = document.createElement('p');
+      const changements = Object.entries(d.proposed_changes || {})
+        .map(([cle, valeur]) => cle + ' : ' + String(valeur))
+        .join(', ');
+
+      texte.textContent =
+        (statuts[d.status] || d.status) + ' — ' + changements;
+      ligne.appendChild(texte);
+
+      if (d.review_note) {
+        const motif = document.createElement('p');
+        motif.textContent = 'Motif : ' + d.review_note;
+        ligne.appendChild(motif);
+      }
+
+      box.appendChild(ligne);
+    });
+
+    box.classList.remove('hidden');
+  }
+
+  client.auth.onAuthStateChange(() => {
+    setTimeout(chargerHistorique, 0);
+  });
+
+  document.getElementById('request-pro-change')
+    ?.addEventListener('click', chargerHistorique);
+
+  chargerHistorique();
+});
+</script>
+
 
    
   </div>
