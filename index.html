@@ -68,6 +68,35 @@
   }
 }
 
+ 
+/* Présentation des boutons professionnels */
+.pro-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0 12px;
+}
+
+.pro-actions .btn {
+  width: 100%;
+  min-width: 0;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.4;
+  padding: 12px;
+}
+
+/* Adaptation aux téléphones */
+@media (max-width: 560px) {
+  .pro-actions {
+    grid-template-columns: 1fr;
+  }
+}
+ 
   </style>
 </head>
 <body>
@@ -268,13 +297,15 @@
 </form>
 
 
-<button id="view-pro-profile" type="button" class="btn secondary hidden">Voir mon profil professionnel</button>
+
+<div class="pro-actions">
+  <button id="view-pro-profile" type="button" class="btn secondary hidden">Voir mon profil professionnel</button>
+  <button id="request-pro-change" type="button" class="btn secondary hidden">Demander une modification de mon profil</button>
+</div>
 
 <div id="pro-profile-details" class="card hidden" aria-live="polite"></div>
-
-<button id="request-pro-change" type="button" class="btn secondary hidden">Demander une modification de mon profil</button>
-
 <div id="pro-change-panel" class="card hidden" aria-live="polite"></div>
+
 
    
   </div>
