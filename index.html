@@ -272,6 +272,10 @@
 
 <div id="pro-profile-details" class="card hidden" aria-live="polite"></div>
 
+<button id="request-pro-change" type="button" class="btn secondary hidden">Demander une modification de mon profil</button>
+
+<div id="pro-change-panel" class="card hidden" aria-live="polite"></div>
+
    
   </div>
 </section>
@@ -496,6 +500,156 @@ document.querySelectorAll('input[name="trade"]').forEach(caseMetier => {
         details.textContent = 'Lecture du profil impossible.';
       }
     }
+  });
+})();
+</script>
+
+<script>
+(() => {
+  const client = window.batilinkClient;
+  const button = document.getElementById('request-pro-change');
+  const panel = document.getElementById('pro-change-panel');
+
+  if (!client || !button || !panel) return;
+
+  let version = 0;
+  let professional = null;
+
+  function reset() {
+    version++;
+    professional = null;
+    button.classList.add('hidden');
+    panel.classList.add('hidden');
+    panel.replaceChildren();
+  }
+
+  async function loadProfessional() {
+    const currentVersion = ++version;
+
+    try {
+      const { data, error } = await client.auth.getUser();
+      if (currentVersion !== version || error || !data?.user) return;
+
+      const { data: profile, error: profileError } = await client
+        .from('batilink_professionals')
+        .select('id,phone,email')
+        .eq('user_id', data.user.id)
+        .maybeSingle();
+
+      if (currentVersion !== version || profileError || !profile) return;
+
+      professional = { ...profile, user_id: data.user.id };
+      button.classList.remove('hidden');
+    } catch (error) {
+      console.error('Profil indisponible', error);
+    }
+  }
+
+  client.auth.onAuthStateChange(() => {
+    reset();
+    setTimeout(loadProfessional, 0);
+  });
+
+  loadProfessional();
+
+  button.addEventListener('click', () => {
+    if (!professional) return;
+
+    const profile = professional;
+    panel.replaceChildren();
+    panel.classList.remove('hidden');
+
+    const form = document.createElement('form');
+    const title = document.createElement('h3');
+    title.textContent = 'Demande de modification';
+    form.appendChild(title);
+
+    const inputs = {};
+
+    for (const [key, label, type] of [
+      ['phone', 'Téléphone', 'tel'],
+      ['email', 'E-mail professionnel', 'email']
+    ]) {
+      const fieldLabel = document.createElement('label');
+      fieldLabel.textContent = label;
+
+      const input = document.createElement('input');
+      input.type = type;
+      input.value = profile[key] ?? '';
+      input.maxLength = type === 'email' ? 254 : 40;
+      input.required = true;
+
+      fieldLabel.appendChild(input);
+      form.appendChild(fieldLabel);
+      inputs[key] = input;
+    }
+
+    const submit = document.createElement('button');
+    submit.type = 'submit';
+    submit.className = 'btn';
+    submit.textContent = 'Envoyer ma demande';
+
+    const message = document.createElement('p');
+    message.setAttribute('role', 'status');
+
+    form.append(submit, message);
+    panel.appendChild(form);
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const proposed_changes = {};
+
+      for (const key of ['phone', 'email']) {
+        const value = inputs[key].value.trim();
+
+        if (value !== String(profile[key] ?? '').trim()) {
+          proposed_changes[key] = value;
+        }
+      }
+
+      if (Object.keys(proposed_changes).length === 0) {
+        message.textContent = 'Aucune modification détectée.';
+        return;
+      }
+
+      submit.disabled = true;
+      message.textContent = 'Enregistrement en cours...';
+
+      try {
+        const { data, error: authError } = await client.auth.getUser();
+
+        if (authError || !data?.user ||
+            data.user.id !== profile.user_id ||
+            professional !== profile) {
+          throw new Error('Session non valide');
+        }
+
+        const { error } = await client
+          .from('batilink_professional_change_requests')
+          .insert({
+            professional_id: profile.id,
+            user_id: data.user.id,
+            proposed_changes
+          });
+
+        if (error) throw error;
+
+        if (professional === profile) {
+          panel.replaceChildren();
+          panel.textContent =
+            'Demande enregistrée, en attente de vérification.';
+        }
+      } catch (error) {
+        if (professional === profile) {
+          message.textContent =
+            'Enregistrement impossible. Réessaie ultérieurement.';
+        }
+        console.error('Demande de modification', error);
+      } finally {
+        submit.disabled = false;
+      }
+    });
   });
 })();
 </script>
