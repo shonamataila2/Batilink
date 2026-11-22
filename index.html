@@ -783,6 +783,78 @@ document.querySelectorAll('input[name="trade"]').forEach(caseMetier => {
         JSON.stringify(demande.proposed_changes ?? {});
 
       carte.append(entreprise, modifications);
+
+const actions = document.createElement('div');
+actions.style.cssText =
+  'display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;';
+
+const changements = demande.proposed_changes ?? {};
+const cles = Object.keys(changements);
+const modificationSimple =
+  cles.length > 0 &&
+  cles.every(cle => ['phone', 'email'].includes(cle));
+
+for (const [texte, decision] of [
+  ['Accepter', 'approved'],
+  ['Refuser', 'rejected']
+]) {
+  const bouton = document.createElement('button');
+  bouton.type = 'button';
+  bouton.className =
+    decision === 'approved' ? 'btn' : 'btn secondary';
+  bouton.textContent = texte;
+
+  if (decision === 'approved' && !modificationSimple) {
+    bouton.disabled = true;
+    bouton.title = 'Vérification manuelle nécessaire';
+  }
+
+  bouton.addEventListener('click', async () => {
+    let note = null;
+
+    if (decision === 'rejected') {
+      note = prompt('Motif du refus :');
+      if (note === null) return;
+      note = note.trim();
+
+      if (!note || note.length > 500) {
+        alert('Motif obligatoire, 500 caractères maximum.');
+        return;
+      }
+    }
+
+    if (!confirm('Confirmer la décision : ' + texte + ' ?')) {
+      return;
+    }
+
+    actions.querySelectorAll('button').forEach(b => {
+      b.disabled = true;
+    });
+
+    try {
+      const { error } = await client.rpc(
+        'batilink_admin_decide_change',
+        {
+          p_request_id: demande.request_id,
+          p_decision: decision,
+          p_note: note
+        }
+      );
+
+      if (error) throw error;
+      alert('Décision enregistrée.');
+    } catch (erreur) {
+      alert('Erreur : ' + erreur.message);
+    }
+
+    await chargerAdmin();
+  });
+
+  actions.appendChild(bouton);
+}
+
+carte.appendChild(actions);
+
       panel.appendChild(carte);
     });
   }
