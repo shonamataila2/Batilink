@@ -400,6 +400,15 @@ if (!data?.length) {
         (statuts[d.status] || d.status) + ' — ' + changements;
       ligne.appendChild(texte);
 
+const date = document.createElement('p');
+date.textContent = 'Envoyée le ' +
+  new Date(d.created_at).toLocaleString('fr-FR', {
+    timeZone: 'Pacific/Noumea',
+    dateStyle: 'short',
+    timeStyle: 'short'
+  });
+ligne.appendChild(date);
+
       if (d.review_note) {
         const motif = document.createElement('p');
         motif.textContent = 'Motif : ' + d.review_note;
