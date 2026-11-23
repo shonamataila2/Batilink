@@ -419,6 +419,8 @@ if (!data?.length) {
   document.getElementById('request-pro-change')
     ?.addEventListener('click', chargerHistorique);
 
+window.addEventListener('batilink:professional-change-updated', chargerHistorique);
+
   chargerHistorique();
 });
 </script>
@@ -791,6 +793,9 @@ document.querySelectorAll('input[name="trade"]').forEach(caseMetier => {
           panel.replaceChildren();
           panel.textContent =
             'Demande enregistrée, en attente de vérification.';
+          
+window.dispatchEvent(new Event('batilink:professional-change-updated'));
+
         }
       } catch (error) {
         if (professional === profile) {
