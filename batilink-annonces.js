@@ -110,6 +110,47 @@ if (professionnel.status !== "verified") {
           creerElement("p", "Début souhaité : " + (annonce.start_date || "À définir"))
         );
 
+       
+const boutonInteret = creerElement("button", "Je suis intéressé");
+boutonInteret.type = "button";
+boutonInteret.className = "btn";
+
+const retourInteret = creerElement("p", "");
+retourInteret.setAttribute("role", "status");
+
+boutonInteret.addEventListener("click", async () => {
+  boutonInteret.disabled = true;
+  retourInteret.textContent = "Envoi en cours...";
+
+  try {
+    const { error } = await client.rpc("batilink_submit_interest", {
+      p_request_id: annonce.id,
+      p_message: null
+    });
+
+    if (error) {
+      if (error.message?.includes("Reponse deja envoyee")) {
+        boutonInteret.textContent = "Déjà répondu";
+        retourInteret.textContent = "Vous avez déjà répondu à cette annonce.";
+      } else {
+        console.error("Erreur de réponse :", error);
+        retourInteret.textContent = "Envoi impossible. Réessayez.";
+        boutonInteret.disabled = false;
+      }
+      return;
+    }
+
+    boutonInteret.textContent = "Intérêt envoyé";
+    retourInteret.textContent = "Votre intérêt a été enregistré.";
+  } catch (erreur) {
+    console.error("Erreur de connexion :", erreur);
+    retourInteret.textContent = "Erreur de connexion. Réessayez.";
+    boutonInteret.disabled = false;
+  }
+});
+
+carte.append(boutonInteret, retourInteret);
+
         zone.appendChild(carte);
       });
 

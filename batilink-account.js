@@ -435,6 +435,23 @@ refreshRequests();
 
       const requests = data ?? [];
 
+const { data: responses, error: responsesError } =
+  await client.rpc('batilink_client_interests');
+
+if (version !== refreshVersion) return;
+
+if (responsesError) {
+  console.error('Chargement des intérêts :', responsesError);
+}
+
+const responsesParAnnonce = new Map();
+
+for (const response of responsesError ? [] : (responses ?? [])) {
+  const liste = responsesParAnnonce.get(response.request_id) ?? [];
+  liste.push(response);
+  responsesParAnnonce.set(response.request_id, liste);
+}
+
       onlineStatus.textContent = requests.length
         ? ''
         : 'Aucune demande enregistrée dans ce compte.';
@@ -452,6 +469,29 @@ refreshRequests();
           part.textContent = value ?? '';
           card.append(part);
         }
+
+const interets = (responsesParAnnonce.get(item.id) ?? [])
+  .filter(reponse => reponse.response_status === 'interested');
+
+const infoInterets = document.createElement('p');
+
+infoInterets.textContent = responsesError
+  ? 'Réponses momentanément indisponibles.'
+  : interets.length
+    ? `${interets.length} professionnel(s) intéressé(s) :`
+    : 'Aucun professionnel intéressé pour le moment.';
+
+card.append(infoInterets);
+
+for (const reponse of interets) {
+  const ligneInteret = document.createElement('p');
+
+  ligneInteret.textContent =
+    'Professionnel : ' + (reponse.company || 'Nom non renseigné') +
+    (reponse.message ? ' — ' + reponse.message : '');
+
+  card.append(ligneInteret);
+}
 
         onlineList.append(card);
       }
