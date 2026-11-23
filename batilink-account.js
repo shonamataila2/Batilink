@@ -306,6 +306,24 @@ if (!signup && data?.session?.user) {
 
         if (requestForm) requestForm.reset();
         if (requestStatus) requestStatus.hidden = true;
+       
+const home = document.getElementById('home');
+
+if (home) {
+  document.getElementById('logout-success')?.remove();
+
+  const notice = document.createElement('p');
+  notice.id = 'logout-success';
+  notice.className = 'notice';
+  notice.style.color = '#188038';
+  notice.textContent = 'Vous êtes déconnecté de votre compte BatiLink.';
+  notice.setAttribute('role', 'status');
+
+  home.prepend(notice);
+
+  setTimeout(() => notice.remove(), 6000);
+}
+
       } catch {
         if (accountStatus) {
           accountStatus.textContent = 'Déconnexion impossible. Réessaie.';
