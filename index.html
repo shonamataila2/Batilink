@@ -886,15 +886,16 @@ window.dispatchEvent(new Event('batilink:professional-change-updated'));
       entreprise.textContent = demande.company || 'Entreprise';
 
       const modifications = document.createElement('p');
-      modifications.textContent =
-        'Modifications demandées : ' +
-        
-Object.entries(demande.proposed_changes ?? {})
-  .map(([cle, valeur]) =>
-    (cle === 'phone' ? 'Téléphone' :
-     cle === 'email' ? 'E-mail professionnel' : cle)
-    + ' : ' + String(valeur))
-  .join(', ')
+
+modifications.textContent =
+  'Modifications demandées : ' +
+  Object.entries(demande.proposed_changes ?? {})
+    .map(([cle, valeur]) =>
+      (cle === 'phone' ? 'Téléphone' :
+       cle === 'email' ? 'E-mail professionnel' : cle)
+      + ' : ' + String(valeur))
+    .join(', ');
+
 
 
       carte.append(entreprise, modifications);
