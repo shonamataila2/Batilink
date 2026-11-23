@@ -460,7 +460,23 @@ window.addEventListener('batilink:professional-change-updated', chargerHistoriqu
 const sections=['home','request','pro','tracking','account','annonces-pro','admin'];
 
 
-function show(id){sections.forEach(s=>document.getElementById(s).classList.toggle('hidden',s!==id));if(id==='tracking'||id==='admin')renderLists();window.scrollTo(0,0)}
+
+function show(id) {
+  sections.forEach(s => {
+    document.getElementById(s).classList.toggle('hidden', s !== id);
+  });
+
+  if (id === 'tracking' || id === 'admin') {
+    renderLists();
+  }
+
+  if (id === 'tracking') {
+    document.dispatchEvent(new Event('batilink:tracking'));
+  }
+
+  window.scrollTo(0, 0);
+}
+
 function get(k){try{return JSON.parse(localStorage.getItem('bl_'+k)||'[]')}catch(e){return []}}
 function put(k,v){localStorage.setItem('bl_'+k,JSON.stringify(v))}
 
