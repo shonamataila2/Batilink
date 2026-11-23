@@ -452,6 +452,25 @@ for (const response of responsesError ? [] : (responses ?? [])) {
   responsesParAnnonce.set(response.request_id, liste);
 }
 
+const { data: appointments, error: appointmentsError } =
+  await client.rpc('batilink_my_appointments');
+
+if (version !== refreshVersion) return;
+
+if (appointmentsError) {
+  console.error('Chargement des rendez-vous :', appointmentsError);
+}
+
+const rendezVousParAnnonce = new Map();
+
+for (const rdv of appointmentsError ? [] : (appointments ?? [])) {
+  if (rdv.my_role !== 'client') continue;
+
+  const liste = rendezVousParAnnonce.get(rdv.request_id) ?? [];
+  liste.push(rdv);
+  rendezVousParAnnonce.set(rdv.request_id, liste);
+}
+
       onlineStatus.textContent = requests.length
         ? ''
         : 'Aucune demande enregistrée dans ce compte.';
@@ -491,6 +510,64 @@ for (const reponse of interets) {
     (reponse.message ? ' — ' + reponse.message : '');
 
   card.append(ligneInteret);
+}
+
+const rdvs = rendezVousParAnnonce.get(item.id) ?? [];
+
+if (appointmentsError) {
+  const erreurRdv = document.createElement('p');
+  erreurRdv.textContent =
+    'Rendez-vous momentanément indisponibles.';
+  card.append(erreurRdv);
+}
+
+const statutsRdv = {
+  pending_client: 'En attente de votre réponse',
+  accepted: 'Rendez-vous confirmé',
+  refused: 'Rendez-vous refusé',
+  counter_proposed: 'Autre date proposée',
+  cancelled: 'Rendez-vous annulé'
+};
+
+for (const rdv of rdvs) {
+  const bloc = document.createElement('div');
+  bloc.className = 'card';
+
+  const titre = document.createElement('strong');
+  titre.textContent = 'Rendez-vous de chantier';
+
+  const date = document.createElement('p');
+  date.textContent = 'Date proposée : ' +
+    new Date(rdv.proposed_start_at).toLocaleString('fr-FR', {
+      timeZone: 'Pacific/Noumea',
+      dateStyle: 'short',
+      timeStyle: 'short'
+    });
+
+  const statut = document.createElement('p');
+  statut.textContent =
+    statutsRdv[rdv.status] || rdv.status;
+
+  bloc.append(titre, date, statut);
+
+  if (rdv.counter_start_at) {
+    const autreDate = document.createElement('p');
+    autreDate.textContent = 'Autre date : ' +
+      new Date(rdv.counter_start_at).toLocaleString('fr-FR', {
+        timeZone: 'Pacific/Noumea',
+        dateStyle: 'short',
+        timeStyle: 'short'
+      });
+    bloc.append(autreDate);
+  }
+
+  if (rdv.message) {
+    const message = document.createElement('p');
+    message.textContent = rdv.message;
+    bloc.append(message);
+  }
+
+  card.append(bloc);
 }
 
         onlineList.append(card);
