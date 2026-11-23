@@ -888,7 +888,14 @@ window.dispatchEvent(new Event('batilink:professional-change-updated'));
       const modifications = document.createElement('p');
       modifications.textContent =
         'Modifications demandées : ' +
-        JSON.stringify(demande.proposed_changes ?? {});
+        
+Object.entries(demande.proposed_changes ?? {})
+  .map(([cle, valeur]) =>
+    (cle === 'phone' ? 'Téléphone' :
+     cle === 'email' ? 'E-mail professionnel' : cle)
+    + ' : ' + String(valeur))
+  .join(', ')
+
 
       carte.append(entreprise, modifications);
 
