@@ -393,7 +393,9 @@ if (!data?.length) {
 
       const texte = document.createElement('p');
       const changements = Object.entries(d.proposed_changes || {})
-        .map(([cle, valeur]) => cle + ' : ' + String(valeur))
+        
+.map(([cle, valeur]) => (cle === 'phone' ? 'Téléphone' : cle) + ' : ' + String(valeur))
+
         .join(', ');
 
       texte.textContent =
