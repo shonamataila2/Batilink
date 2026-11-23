@@ -361,7 +361,21 @@ window.addEventListener('load', () => {
       .order('created_at', { ascending: false })
       .limit(20);
 
-    if (current !== version || error || !data?.length) return;
+   
+if (current !== version) return;
+
+if (error) {
+  box.textContent = "Impossible de charger l'historique.";
+  box.classList.remove('hidden');
+  return;
+}
+
+if (!data?.length) {
+  box.textContent = "Aucune demande de modification pour le moment.";
+  box.classList.remove('hidden');
+  return;
+}
+
 
     const titre = document.createElement('h3');
     titre.textContent = 'Historique de mes demandes';
