@@ -238,7 +238,7 @@ boutonRdv.addEventListener("click", async () => {
     retourRdv.textContent = "Rendez-vous proposé au client.";
     dateRdv.value = "";
     messageRdv.value = "";
-
+await chargerAnnonces();
   } catch (erreur) {
     console.error("Proposition rendez-vous :", erreur);
     retourRdv.textContent =
