@@ -168,9 +168,24 @@ boutonInteret.addEventListener("click", async () => {
 
 carte.append(boutonInteret, retourInteret);
 const dateRdv = document.createElement("input");
-dateRdv.type = "datetime-local";
+dateRdv.type = "date";
 dateRdv.setAttribute("aria-label", "Date du rendez-vous");
+const heureRdv = document.createElement("select");
+heureRdv.setAttribute("aria-label", "Heure");
 
+for (let h = 0; h < 24; h++) {
+  const valeur = String(h).padStart(2, "0");
+  heureRdv.add(new Option(valeur + " h", valeur));
+}
+heureRdv.value = "09";
+
+const minuteRdv = document.createElement("select");
+minuteRdv.setAttribute("aria-label", "Minutes");
+
+for (const m of ["00", "15", "30", "45"]) {
+  minuteRdv.add(new Option(m + " min", m));
+}
+minuteRdv.value = "00";
 const labelRdv = creerElement(
   "p", "Date du rendez-vous (heure de Nouvelle-Calédonie)"
 );
@@ -194,8 +209,11 @@ boutonRdv.addEventListener("click", async () => {
     return;
   }
 
-  const dateChoisie = new Date(dateRdv.value + "+11:00");
-
+const dateChoisie = new Date(
+  dateRdv.value + "T" +
+  heureRdv.value + ":" +
+  minuteRdv.value + ":00+11:00"
+);
   if (!Number.isFinite(dateChoisie.getTime()) ||
       dateChoisie.getTime() <= Date.now()) {
     retourRdv.textContent = "Choisissez une date future.";
@@ -252,6 +270,8 @@ await chargerAnnonces();
 carte.append(
   labelRdv,
   dateRdv,
+  heureRdv,
+  minuteRdv,
   messageRdv,
   boutonRdv,
   retourRdv
