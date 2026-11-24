@@ -80,6 +80,22 @@ if (professionnel.status !== "verified") {
 .select("id,trade,commune,description,budget,start_date");
 
       if (error) throw error;
+      const { data: rendezVous, error: erreurRdv } =
+  await client.rpc("batilink_my_appointments");
+
+if (erreurRdv) {
+  console.error("Chargement des rendez-vous :", erreurRdv);
+}
+
+const rendezVousParAnnonce = new Map();
+
+for (const rdv of erreurRdv ? [] : (rendezVous ?? [])) {
+  if (rdv.my_role !== "professional") continue;
+
+  const liste = rendezVousParAnnonce.get(rdv.request_id) ?? [];
+  liste.push(rdv);
+  rendezVousParAnnonce.set(rdv.request_id, liste);
+}
 
       zone.replaceChildren();
 
@@ -239,7 +255,94 @@ carte.append(
   boutonRdv,
   retourRdv
 );
-        zone.appendChild(carte);
+       if (erreurRdv) {
+  carte.appendChild(creerElement(
+    "p", "Rendez-vous momentanément indisponibles."
+  ));
+}
+
+const rdvs = rendezVousParAnnonce.get(annonce.id) ?? [];
+
+for (const rdv of rdvs) {
+  const bloc = document.createElement("div");
+  bloc.className = "card";
+
+  const statuts = {
+    pending_client: "En attente du client",
+    accepted: "Rendez-vous confirmé",
+    refused: "Rendez-vous refusé",
+    counter_proposed: "Contre-proposition du client",
+    cancelled: "Rendez-vous annulé"
+  };
+
+  const formaterDate = (valeur) =>
+    new Date(valeur).toLocaleString("fr-FR", {
+      timeZone: "Pacific/Noumea",
+      dateStyle: "short",
+      timeStyle: "short"
+    });
+
+  bloc.append(
+    creerElement("strong", "Rendez-vous de chantier"),
+    creerElement("p", "Date : " + formaterDate(rdv.proposed_start_at)),
+    creerElement("p", statuts[rdv.status] || rdv.status)
+  );
+
+  if (rdv.counter_start_at) {
+    bloc.appendChild(creerElement(
+      "p", "Nouvelle date : " + formaterDate(rdv.counter_start_at)
+    ));
+  }
+
+  if (rdv.message) {
+    bloc.appendChild(creerElement("p", rdv.message));
+  }
+if (rdv.status === "counter_proposed") {
+  const retour = creerElement("p", "");
+  retour.setAttribute("role", "status");
+
+  const accepter = creerElement("button", "Accepter la nouvelle date");
+  const refuser = creerElement("button", "Refuser la nouvelle date");
+
+  accepter.type = "button";
+  refuser.type = "button";
+  accepter.className = "btn";
+  refuser.className = "btn";
+
+  async function decision(action) {
+    accepter.disabled = true;
+    refuser.disabled = true;
+    retour.textContent = "Enregistrement en cours...";
+
+    try {
+      const { error } = await client.rpc(
+        "batilink_professional_counter_decision",
+        {
+          p_appointment_id: rdv.appointment_id,
+          p_action: action
+        }
+      );
+
+      if (error) throw error;
+
+      retour.textContent = "Décision enregistrée.";
+      await chargerAnnonces();
+
+    } catch (erreur) {
+      console.error("Décision rendez-vous :", erreur);
+      retour.textContent = "Opération impossible. Réessayez.";
+      accepter.disabled = false;
+      refuser.disabled = false;
+    }
+  }
+
+  accepter.addEventListener("click", () => decision("accept"));
+  refuser.addEventListener("click", () => decision("refuse"));
+
+  bloc.append(accepter, refuser, retour);
+}
+  carte.appendChild(bloc);
+} zone.appendChild(carte);
       });
 
     } catch (erreur) {
