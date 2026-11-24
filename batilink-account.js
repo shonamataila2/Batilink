@@ -566,7 +566,90 @@ for (const rdv of rdvs) {
     message.textContent = rdv.message;
     bloc.append(message);
   }
+if (rdv.status === 'pending_client') {
+  const actions = document.createElement('div');
 
+  const nouvelleDate = document.createElement('input');
+  nouvelleDate.type = 'datetime-local';
+  nouvelleDate.setAttribute(
+    'aria-label', 'Nouvelle date, heure de Nouvelle-Calédonie'
+  );
+
+  const indication = document.createElement('p');
+  indication.textContent = 'Nouvelle date (heure de Nouvelle-Calédonie) :';
+
+  const retour = document.createElement('p');
+  retour.setAttribute('role', 'status');
+
+  const boutons = [];
+
+  for (const [action, libelle] of [
+    ['accept', 'Accepter'],
+    ['refuse', 'Refuser'],
+    ['counter', 'Proposer une autre date']
+  ]) {
+    const bouton = document.createElement('button');
+    bouton.type = 'button';
+    bouton.textContent = libelle;
+    boutons.push(bouton);
+
+    bouton.addEventListener('click', async () => {
+      let dateProposee = null;
+
+      if (action === 'counter') {
+        if (!nouvelleDate.value) {
+          retour.textContent = 'Choisissez une nouvelle date.';
+          return;
+        }
+
+        const choix = new Date(nouvelleDate.value + '+11:00');
+
+        if (!Number.isFinite(choix.getTime()) ||
+            choix.getTime() <= Date.now()) {
+          retour.textContent = 'Choisissez une date future.';
+          return;
+        }
+
+        dateProposee = choix.toISOString();
+      }
+
+      if (!window.confirm('Confirmer : ' + libelle + ' ?')) {
+        return;
+      }
+
+      boutons.forEach(b => b.disabled = true);
+      nouvelleDate.disabled = true;
+      retour.textContent = 'Enregistrement en cours...';
+
+      try {
+        const { error } = await client.rpc(
+          'batilink_client_appointment_decision',
+          {
+            p_appointment_id: rdv.appointment_id,
+            p_action: action,
+            p_counter_start_at: dateProposee
+          }
+        );
+
+        if (error) throw error;
+
+        retour.textContent = 'Décision enregistrée.';
+        await refreshRequests();
+
+      } catch (err) {
+        console.error('Décision rendez-vous :', err);
+        retour.textContent =
+          'Impossible de confirmer la décision. Actualisez le suivi.';
+        boutons.forEach(b => b.disabled = false);
+        nouvelleDate.disabled = false;
+      }
+    });
+
+    actions.append(bouton);
+  }
+
+  bloc.append(indication, nouvelleDate, actions, retour);
+}
   card.append(bloc);
 }
 
