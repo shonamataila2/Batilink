@@ -14,8 +14,9 @@
     element.textContent = texte || "";
     return element;
   }
-
+let generationChargement = 0;
   async function chargerAnnonces() {
+    const generation = ++generationChargement;
     zone.replaceChildren();
     try {
       const config = window.batilinkConfig;
@@ -82,7 +83,7 @@ if (professionnel.status !== "verified") {
       if (error) throw error;
       const { data: rendezVous, error: erreurRdv } =
   await client.rpc("batilink_my_appointments");
-
+if (generation !== generationChargement) return;
 if (erreurRdv) {
   console.error("Chargement des rendez-vous :", erreurRdv);
 }
@@ -346,6 +347,7 @@ if (rdv.status === "counter_proposed") {
       });
 
     } catch (erreur) {
+      if (generation !== generationChargement) return;
       console.error("BatiLink annonces :", erreur);
       afficherMessage("Impossible de charger les annonces.");
     }
@@ -355,6 +357,7 @@ const authClient = window.batilinkClient;
 if (authClient) {
   authClient.auth.onAuthStateChange((event) => {
     if (event === "SIGNED_OUT") {
+      generationChargement++;
       zone.replaceChildren();
       afficherMessage("Connectez-vous pour consulter les annonces.");
     }
