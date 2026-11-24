@@ -150,7 +150,95 @@ boutonInteret.addEventListener("click", async () => {
 });
 
 carte.append(boutonInteret, retourInteret);
+const dateRdv = document.createElement("input");
+dateRdv.type = "datetime-local";
+dateRdv.setAttribute("aria-label", "Date du rendez-vous");
 
+const labelRdv = creerElement(
+  "p", "Date du rendez-vous (heure de Nouvelle-Calédonie)"
+);
+
+const messageRdv = document.createElement("textarea");
+messageRdv.placeholder = "Message facultatif";
+messageRdv.maxLength = 1000;
+
+const boutonRdv = creerElement(
+  "button", "Proposer un rendez-vous"
+);
+boutonRdv.type = "button";
+boutonRdv.className = "btn";
+
+const retourRdv = creerElement("p", "");
+retourRdv.setAttribute("role", "status");
+
+boutonRdv.addEventListener("click", async () => {
+  if (!dateRdv.value) {
+    retourRdv.textContent = "Choisissez une date.";
+    return;
+  }
+
+  const dateChoisie = new Date(dateRdv.value + "+11:00");
+
+  if (!Number.isFinite(dateChoisie.getTime()) ||
+      dateChoisie.getTime() <= Date.now()) {
+    retourRdv.textContent = "Choisissez une date future.";
+    return;
+  }
+
+  if (!window.confirm("Envoyer cette proposition de rendez-vous ?")) {
+    return;
+  }
+
+  boutonRdv.disabled = true;
+  retourRdv.textContent = "Envoi en cours...";
+
+  try {
+    const { data: reponses, error: erreurReponses } =
+      await client.rpc("batilink_my_professional_responses");
+
+    if (erreurReponses) throw erreurReponses;
+
+    const reponse = (reponses ?? []).find(
+      r => r.request_id === annonce.id
+    );
+
+    if (!reponse) {
+      retourRdv.textContent =
+        "Cliquez d'abord sur Je suis intéressé.";
+      return;
+    }
+
+    const { error } = await client.rpc(
+      "batilink_propose_appointment",
+      {
+        p_response_id: reponse.response_id,
+        p_proposed_start_at: dateChoisie.toISOString(),
+        p_message: messageRdv.value.trim() || null
+      }
+    );
+
+    if (error) throw error;
+
+    retourRdv.textContent = "Rendez-vous proposé au client.";
+    dateRdv.value = "";
+    messageRdv.value = "";
+
+  } catch (erreur) {
+    console.error("Proposition rendez-vous :", erreur);
+    retourRdv.textContent =
+      "Envoi non confirmé. Vérifiez le suivi avant de réessayer.";
+  } finally {
+    boutonRdv.disabled = false;
+  }
+});
+
+carte.append(
+  labelRdv,
+  dateRdv,
+  messageRdv,
+  boutonRdv,
+  retourRdv
+);
         zone.appendChild(carte);
       });
 
