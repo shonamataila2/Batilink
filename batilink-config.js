@@ -1,4 +1,4 @@
 window.batilinkConfig = {
-  url: 'https://rvkmkjuhmtlhifdvqmdq.supabase.co',
-  publishableKey: 'sb_publishable_WklIS6MyyPsM8yLq0xdXnQ_VTc1NhuO',
+  url: 'https://iqpzgjshovueshugxsay.supabase.co',
+  publishableKey: 'sb_publishable_E79sc6GZu_vRGdf8PUYfLg_qRvHx3M0'
 };

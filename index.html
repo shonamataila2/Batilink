@@ -26,6 +26,10 @@
     nav button{background:none;border:0;color:var(--muted);font-size:11px;font-weight:700;padding:5px;cursor:pointer}nav button strong{display:block;font-size:19px;margin-bottom:2px}
     .notice{background:#fff7e8;border:1px solid #f2d7a8;border-radius:12px;padding:12px;font-size:12px;color:#664a1d;line-height:1.45}
     .status{font-size:12px;font-weight:750}.pending{color:#99620a}.approved{color:#17734e}.rejected{color:#a43131}
+    .assignment-dialog{width:min(92vw,28rem);border:1px solid var(--line);border-radius:16px;padding:20px;color:var(--ink)}
+    .assignment-dialog::backdrop{background:#18232180}
+    .assignment-dialog h2{margin-top:0;font-size:1.25rem}
+    .assignment-dialog p{line-height:1.5}
     footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
     @media(min-width:620px){header{padding:24px max(24px,calc((100% - 720px)/2)) 28px}.grid{grid-template-columns:repeat(3,1fr)}main{padding-top:24px}}
     
@@ -242,6 +246,14 @@
     <h2 class="section-title">Mes demandes en ligne</h2>
 <p id="online-status" role="status">Chargement des demandes...</p>
 <div id="online-list"></div>
+<dialog id="assignment-dialog" class="assignment-dialog" aria-labelledby="assignment-title" aria-describedby="assignment-warning">
+  <h2 id="assignment-title">Attribuer cette demande ?</h2>
+  <p id="assignment-warning">Ta demande sera marquée « Attribuée » et retirée des annonces des professionnels. Les réponses reçues et les rendez-vous confirmés seront conservés. Les propositions en attente seront closes. Pour changer d’avis, tu devras déposer une nouvelle demande.</p>
+  <form method="dialog" class="row">
+    <button class="btn secondary" value="cancel" autofocus>Annuler</button>
+    <button class="btn" value="assign">Confirmer l’attribution</button>
+  </form>
+</dialog>
    
 
  

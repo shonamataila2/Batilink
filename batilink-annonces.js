@@ -96,212 +96,6 @@
         return;
       }
 
-      const { data: annonces, error } = await client
-        .rpc("batilink_matching_requests")
-        .select("id,trade,commune,description,budget,start_date");
-
-      if (generation !== generationChargement) return;
-      if (error) throw error;
-
-      afficherMessage(annonces?.length
-        ? annonces.length + " annonce(s) disponible(s)."
-        : "Aucune annonce disponible actuellement.");
-
-      (annonces ?? []).forEach(function (annonce) {
-        const carte = document.createElement("div");
-        carte.className = "card";
-
-        carte.appendChild(
-          creerElement("h3", annonce.trade || "Travaux")
-        );
-        carte.appendChild(
-          creerElement("p", "Commune : " + (annonce.commune || "Non précisée"))
-        );
-        carte.appendChild(
-          creerElement("p", annonce.description || "Sans description")
-        );
-        carte.appendChild(
-          creerElement("p", "Budget : " + (annonce.budget || "À définir"))
-        );
-        carte.appendChild(
-          creerElement("p", "Début souhaité : " + (annonce.start_date || "À définir"))
-        );
-
-
-        const boutonInteret = creerElement("button", "Je suis intéressé");
-        boutonInteret.type = "button";
-        boutonInteret.className = "btn";
-        boutonInteret.hidden = true;
-        boutonInteret.style.minHeight = "44px";
-        const etatInteret = creerElement("p", "Vérification de votre réponse…");
-        etatInteret.setAttribute("role", "status");
-        etatInteret.style.color = "#166534";
-        etatInteret.style.fontWeight = "700";
-
-        const retourInteret = creerElement("p", "");
-        retourInteret.setAttribute("role", "status");
-
-        boutonInteret.addEventListener("click", async () => {
-          boutonInteret.disabled = true;
-          retourInteret.textContent = "Envoi en cours...";
-
-          try {
-            const { error } = await client.rpc("batilink_submit_interest", {
-              p_request_id: annonce.id,
-              p_message: null
-            });
-
-            if (generation !== generationChargement) return;
-            if (error) {
-              if (error.message?.includes("Reponse deja envoyee")) {
-                boutonInteret.textContent = "Déjà répondu";
-                retourInteret.textContent = "Vous avez déjà répondu à cette annonce.";
-                await refreshAppointments(true);
-              } else {
-                console.error("Erreur de réponse :", error);
-                retourInteret.textContent = "Envoi impossible. Réessayez.";
-                boutonInteret.disabled = false;
-              }
-              return;
-            }
-
-            boutonInteret.textContent = "Intérêt envoyé";
-            retourInteret.textContent = "Votre intérêt a été enregistré.";
-            boutonInteret.hidden = true;
-            await refreshAppointments(true);
-          } catch (erreur) {
-            if (generation !== generationChargement) return;
-            console.error("Erreur de connexion :", erreur);
-            retourInteret.textContent = "Erreur de connexion. Réessayez.";
-            boutonInteret.disabled = false;
-          }
-        });
-
-        carte.append(boutonInteret, etatInteret, retourInteret);
-        // BatiLink UX rendez-vous 2026-11-26
-        const formulaireRdv = document.createElement("details");
-        formulaireRdv.style.marginTop = "12px";
-        formulaireRdv.hidden = true;
-        const ouvrirRdv = document.createElement("summary");
-        ouvrirRdv.className = "btn secondary";
-        ouvrirRdv.style.cursor = "pointer";
-        ouvrirRdv.style.fontSize = "16px";
-        ouvrirRdv.dataset.rdvToggle = "true";
-        ouvrirRdv.textContent = "Proposer un rendez-vous";
-        formulaireRdv.append(ouvrirRdv);
-        const dateRdv = document.createElement("input");
-        dateRdv.type = "date";
-        dateRdv.setAttribute("aria-label", "Date du rendez-vous");
-        const heureRdv = appointmentUI.timeSelect("Heure du rendez-vous, heure de Nouvelle-Calédonie", "09:00");
-        const labelRdv = creerElement(
-          "p", "Date du rendez-vous (heure de Nouvelle-Calédonie)"
-        );
-
-        const messageRdv = document.createElement("textarea");
-        messageRdv.placeholder = "Message facultatif";
-        messageRdv.maxLength = 1000;
-
-        const boutonRdv = creerElement(
-          "button", "Envoyer la proposition"
-        );
-        boutonRdv.type = "button";
-        boutonRdv.className = "btn";
-
-        const annulerRdv = creerElement("button", "Annuler");
-        annulerRdv.type = "button";
-        annulerRdv.className = "btn secondary";
-        annulerRdv.style.marginLeft = "8px";
-        annulerRdv.addEventListener("click", () => {
-          formulaireRdv.open = false;
-          dateRdv.value = "";
-          heureRdv.value = "09:00";
-          messageRdv.value = "";
-          retourRdv.textContent = "";
-          ouvrirRdv.focus();
-        });
-        const retourRdv = creerElement("p", "");
-        retourRdv.setAttribute("role", "status");
-
-        boutonRdv.addEventListener("click", async () => {
-          if (!dateRdv.value || !heureRdv.value) {
-            retourRdv.textContent = "Choisissez une date et une heure.";
-            return;
-          }
-
-          const dateChoisie = appointmentUI.toInstant(dateRdv.value, heureRdv.value);
-          if (!Number.isFinite(dateChoisie.getTime()) ||
-              dateChoisie.getTime() <= Date.now()) {
-            retourRdv.textContent = "Choisissez une date future.";
-            return;
-          }
-
-          if (!window.confirm("Envoyer cette proposition de rendez-vous ?")) {
-            return;
-          }
-
-          boutonRdv.disabled = true;
-          annulerRdv.disabled = true;
-          retourRdv.textContent = "Envoi en cours...";
-
-          try {
-            const { data: reponses, error: erreurReponses } =
-              await client.rpc("batilink_my_professional_responses");
-            if (generation !== generationChargement) return;
-
-            if (erreurReponses) throw erreurReponses;
-
-            const reponse = (reponses ?? []).find(
-              r => r.request_id === annonce.id
-            );
-
-            if (!reponse) {
-              retourRdv.textContent =
-                "Cliquez d'abord sur Je suis intéressé.";
-              return;
-            }
-
-            const { error } = await client.rpc(
-              "batilink_propose_appointment",
-              {
-                p_response_id: reponse.response_id,
-                p_proposed_start_at: dateChoisie.toISOString(),
-                p_message: messageRdv.value.trim() || null
-              }
-            );
-
-            if (generation !== generationChargement) return;
-            if (error) throw error;
-
-            retourRdv.textContent = "Rendez-vous proposé au client.";
-            dateRdv.value = "";
-            messageRdv.value = "";
-            formulaireRdv.open = false;
-            await refreshAppointments(true);
-          } catch (erreur) {
-            if (generation !== generationChargement) return;
-            console.error("Proposition rendez-vous :", erreur);
-            retourRdv.textContent =
-              "Envoi non confirmé. Vérifiez le suivi avant de réessayer.";
-          } finally {
-            boutonRdv.disabled = false;
-            annulerRdv.disabled = false;
-          }
-        });
-
-        const actionsRdv = document.createElement("div");
-        actionsRdv.style.marginTop = "8px";
-        actionsRdv.append(boutonRdv, annulerRdv);
-        formulaireRdv.append(labelRdv, dateRdv, heureRdv, messageRdv, actionsRdv);
-        const appointments = document.createElement("div");
-        appointmentTargets.set(annonce.id, appointments);
-        actionTargets.set(annonce.id, {
-          interet: boutonInteret, etat: etatInteret,
-          formulaire: formulaireRdv, ouvrir: ouvrirRdv
-        });
-        carte.append(appointments, formulaireRdv, retourRdv);
-        zone.append(carte);
-      });
-
       appointmentStatus = creerElement("p", "");
       appointmentStatus.setAttribute("role", "status");
       orphanSection = document.createElement("section");
@@ -317,6 +111,201 @@
       afficherMessage("Impossible de charger les annonces.");
     }
   }
+  function appendAnnouncement(annonce, generation) {
+    const carte = document.createElement("div");
+    carte.className = "card";
+
+    carte.appendChild(
+      creerElement("h3", annonce.trade || "Travaux")
+    );
+    carte.appendChild(
+      creerElement("p", "Commune : " + (annonce.commune || "Non précisée"))
+    );
+    carte.appendChild(
+      creerElement("p", annonce.description || "Sans description")
+    );
+    carte.appendChild(
+      creerElement("p", "Budget : " + (annonce.budget || "À définir"))
+    );
+    carte.appendChild(
+      creerElement("p", "Début souhaité : " + (annonce.start_date || "À définir"))
+    );
+
+
+    const boutonInteret = creerElement("button", "Je suis intéressé");
+    boutonInteret.type = "button";
+    boutonInteret.className = "btn";
+    boutonInteret.hidden = true;
+    boutonInteret.style.minHeight = "44px";
+    const etatInteret = creerElement("p", "Vérification de votre réponse…");
+    etatInteret.setAttribute("role", "status");
+    etatInteret.style.color = "#166534";
+    etatInteret.style.fontWeight = "700";
+
+    const retourInteret = creerElement("p", "");
+    retourInteret.setAttribute("role", "status");
+
+    boutonInteret.addEventListener("click", async () => {
+      boutonInteret.disabled = true;
+      retourInteret.textContent = "Envoi en cours...";
+
+      try {
+        const { error } = await client.rpc("batilink_submit_interest", {
+          p_request_id: annonce.id,
+          p_message: null
+        });
+
+        if (generation !== generationChargement) return;
+        if (error) {
+          if (error.message?.includes("Reponse deja envoyee")) {
+            boutonInteret.textContent = "Déjà répondu";
+            retourInteret.textContent = "Vous avez déjà répondu à cette annonce.";
+            await refreshAppointments(true);
+          } else {
+            console.error("Erreur de réponse :", error);
+            retourInteret.textContent = "Envoi impossible. Réessayez.";
+            boutonInteret.disabled = false;
+          }
+          return;
+        }
+
+        boutonInteret.textContent = "Intérêt envoyé";
+        retourInteret.textContent = "Votre intérêt a été enregistré.";
+        boutonInteret.hidden = true;
+        await refreshAppointments(true);
+      } catch (erreur) {
+        if (generation !== generationChargement) return;
+        console.error("Erreur de connexion :", erreur);
+        retourInteret.textContent = "Erreur de connexion. Réessayez.";
+        boutonInteret.disabled = false;
+      }
+    });
+
+    carte.append(boutonInteret, etatInteret, retourInteret);
+    // BatiLink UX rendez-vous 2026-11-26
+    const formulaireRdv = document.createElement("details");
+    formulaireRdv.style.marginTop = "12px";
+    formulaireRdv.hidden = true;
+    const ouvrirRdv = document.createElement("summary");
+    ouvrirRdv.className = "btn secondary";
+    ouvrirRdv.style.cursor = "pointer";
+    ouvrirRdv.style.fontSize = "16px";
+    ouvrirRdv.dataset.rdvToggle = "true";
+    ouvrirRdv.textContent = "Proposer un rendez-vous";
+    formulaireRdv.append(ouvrirRdv);
+    const dateRdv = document.createElement("input");
+    dateRdv.type = "date";
+    dateRdv.setAttribute("aria-label", "Date du rendez-vous");
+    const heureRdv = appointmentUI.timeSelect("Heure du rendez-vous, heure de Nouvelle-Calédonie", "09:00");
+    const labelRdv = creerElement(
+      "p", "Date du rendez-vous (heure de Nouvelle-Calédonie)"
+    );
+
+    const messageRdv = document.createElement("textarea");
+    messageRdv.placeholder = "Message facultatif";
+    messageRdv.maxLength = 1000;
+
+    const boutonRdv = creerElement(
+      "button", "Envoyer la proposition"
+    );
+    boutonRdv.type = "button";
+    boutonRdv.className = "btn";
+
+    const annulerRdv = creerElement("button", "Annuler");
+    annulerRdv.type = "button";
+    annulerRdv.className = "btn secondary";
+    annulerRdv.style.marginLeft = "8px";
+    annulerRdv.addEventListener("click", () => {
+      formulaireRdv.open = false;
+      dateRdv.value = "";
+      heureRdv.value = "09:00";
+      messageRdv.value = "";
+      retourRdv.textContent = "";
+      ouvrirRdv.focus();
+    });
+    const retourRdv = creerElement("p", "");
+    retourRdv.setAttribute("role", "status");
+
+    boutonRdv.addEventListener("click", async () => {
+      if (!dateRdv.value || !heureRdv.value) {
+        retourRdv.textContent = "Choisissez une date et une heure.";
+        return;
+      }
+
+      const dateChoisie = appointmentUI.toInstant(dateRdv.value, heureRdv.value);
+      if (!Number.isFinite(dateChoisie.getTime()) ||
+          dateChoisie.getTime() <= Date.now()) {
+        retourRdv.textContent = "Choisissez une date future.";
+        return;
+      }
+
+      if (!window.confirm("Envoyer cette proposition de rendez-vous ?")) {
+        return;
+      }
+
+      boutonRdv.disabled = true;
+      annulerRdv.disabled = true;
+      retourRdv.textContent = "Envoi en cours...";
+
+      try {
+        const { data: reponses, error: erreurReponses } =
+          await client.rpc("batilink_my_professional_responses");
+        if (generation !== generationChargement) return;
+
+        if (erreurReponses) throw erreurReponses;
+
+        const reponse = (reponses ?? []).find(
+          r => r.request_id === annonce.id
+        );
+
+        if (!reponse) {
+          retourRdv.textContent =
+            "Cliquez d'abord sur Je suis intéressé.";
+          return;
+        }
+
+        const { error } = await client.rpc(
+          "batilink_propose_appointment",
+          {
+            p_response_id: reponse.response_id,
+            p_proposed_start_at: dateChoisie.toISOString(),
+            p_message: messageRdv.value.trim() || null
+          }
+        );
+
+        if (generation !== generationChargement) return;
+        if (error) throw error;
+
+        retourRdv.textContent = "Rendez-vous proposé au client.";
+        dateRdv.value = "";
+        messageRdv.value = "";
+        formulaireRdv.open = false;
+        await refreshAppointments(true);
+      } catch (erreur) {
+        if (generation !== generationChargement) return;
+        console.error("Proposition rendez-vous :", erreur);
+        retourRdv.textContent =
+          "Envoi non confirmé. Vérifiez le suivi avant de réessayer.";
+      } finally {
+        boutonRdv.disabled = false;
+        annulerRdv.disabled = false;
+      }
+    });
+
+    const actionsRdv = document.createElement("div");
+    actionsRdv.style.marginTop = "8px";
+    actionsRdv.append(boutonRdv, annulerRdv);
+    formulaireRdv.append(labelRdv, dateRdv, heureRdv, messageRdv, actionsRdv);
+    const appointments = document.createElement("div");
+    appointmentTargets.set(annonce.id, appointments);
+    actionTargets.set(annonce.id, {
+      carte, interet: boutonInteret, etat: etatInteret,
+      formulaire: formulaireRdv, ouvrir: ouvrirRdv
+    });
+    carte.append(appointments, formulaireRdv, retourRdv);
+    zone.insertBefore(carte, appointmentStatus);
+  }
+
   async function refreshAppointments(force = false) {
     if (!orphanSection || (readingAppointments && !force)) return;
     const generation = generationChargement;
@@ -324,11 +313,25 @@
     readingAppointments = true;
 
     try {
-      const [rendezvous, reponses] = await Promise.all([
+      const [matching, rendezvous, reponses] = await Promise.all([
+        client.rpc("batilink_matching_requests").select("id,trade,commune,description,budget,start_date"),
         client.rpc("batilink_my_appointments"),
         client.rpc("batilink_my_professional_responses")
       ]);
       if (read !== appointmentRead || generation !== generationChargement) return;
+      if (matching.error) throw matching.error;
+      const annonces = matching.data ?? [];
+      const visibles = new Set(annonces.map(annonce => annonce.id));
+      for (const [id, ui] of actionTargets) {
+        if (visibles.has(id)) continue;
+        ui.carte.remove();
+        actionTargets.delete(id);
+        appointmentTargets.delete(id);
+      }
+      for (const annonce of annonces) {
+        if (!actionTargets.has(annonce.id)) appendAnnouncement(annonce, generation);
+      }
+      afficherMessage(annonces.length ? annonces.length + " annonce(s) disponible(s)." : "Aucune annonce disponible actuellement.");
       if (rendezvous.error) throw rendezvous.error;
       if (reponses.error) throw reponses.error;
       const data = rendezvous.data;
@@ -381,7 +384,8 @@
       accepted: "Rendez-vous confirmé",
       refused: "Rendez-vous refusé",
       counter_proposed: "Contre-proposition du client",
-      cancelled: "Rendez-vous annulé"
+      cancelled: "Rendez-vous annulé",
+      closed_assigned: "Demande attribuée — proposition close"
     };
 
     // BatiLink UX expiration V3

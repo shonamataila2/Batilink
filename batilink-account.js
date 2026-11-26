@@ -36,8 +36,9 @@ function connectAccount(client) {
   const online = document.getElementById('online-requests');
   const onlineStatus = document.getElementById('online-status');
   const onlineList = document.getElementById('online-list');
-  const remoteFields = 'id, created_at, trade, commune, description';
+  const remoteFields = 'id, created_at, trade, commune, description, assigned_at';
 
+  const assignmentDialog = document.getElementById('assignment-dialog');
   let userId = null;
   let requestOwner = null;
   let requestId = null;
@@ -184,6 +185,7 @@ show('home');
     const nextUser = session?.user?.id ?? null;
 
     if (userId !== nextUser) {
+      if (assignmentDialog.open) assignmentDialog.close('cancel');
       refreshVersion++;
       appointmentRead++;
       readingAppointments = false;
@@ -429,6 +431,7 @@ refreshRequests();
   async function refreshRequests() {
     if (!userId || !onlineStatus || !onlineList) return;
 
+    if (assignmentDialog.open) assignmentDialog.close('cancel');
     const version = ++refreshVersion;
     appointmentRead++;
     readingAppointments = false;
@@ -505,6 +508,7 @@ for (const reponse of interets) {
   card.append(ligneInteret);
 }
 
+        addAssignmentAction(card, item, version);
         const appointments = document.createElement('div');
         const appointmentStatus = document.createElement('p');
         appointmentStatus.setAttribute('role', 'status');
@@ -520,6 +524,82 @@ for (const reponse of interets) {
       }
     }
   }
+  function addAssignmentAction(card, item, version) {
+    const owner = userId;
+    const label = document.createElement('strong');
+    label.className = 'status approved';
+    label.textContent = 'Attribuée';
+    if (item.assigned_at) {
+      card.append(label);
+      return;
+    }
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn secondary';
+    button.textContent = 'J’ai trouvé mon professionnel';
+    const feedback = document.createElement('p');
+    feedback.setAttribute('role', 'status');
+    const current = () => owner === userId && version === refreshVersion && card.isConnected;
+    let verifyOnly = false;
+
+    button.addEventListener('click', async () => {
+      if (!current() || button.disabled || assignmentDialog.open) return;
+      if (!verifyOnly) {
+        assignmentDialog.returnValue = 'cancel';
+        const closed = new Promise(resolve => assignmentDialog.addEventListener('close', resolve, { once: true }));
+        assignmentDialog.showModal();
+        await closed;
+        if (assignmentDialog.returnValue !== 'assign' || !current()) return;
+      }
+      button.disabled = true;
+      feedback.className = '';
+      feedback.textContent = verifyOnly ? 'Vérification en cours…' : 'Attribution en cours…';
+      try {
+        let assignedAt;
+        if (!verifyOnly) {
+          try {
+            const result = await client.rpc('batilink_assign_request', { p_request_id: item.id });
+            if (!result.error) assignedAt = result.data;
+          } catch {
+            // La transaction a pu aboutir malgré la perte de la réponse.
+          }
+        }
+        if (!current()) return;
+        if (!assignedAt) {
+          verifyOnly = true;
+          const result = await client.from('batilink_requests').select('assigned_at')
+            .eq('id', item.id).eq('user_id', owner).single();
+          if (!current()) return;
+          if (result.error) throw result.error;
+          assignedAt = result.data.assigned_at;
+        }
+        if (!assignedAt) {
+          verifyOnly = false;
+          button.textContent = 'J’ai trouvé mon professionnel';
+          feedback.textContent = 'La demande est toujours ouverte. Tu peux réessayer.';
+          return;
+        }
+        button.replaceWith(label);
+        feedback.className = 'status approved';
+        feedback.textContent = 'Ta demande a été attribuée';
+        feedback.tabIndex = -1;
+        feedback.focus();
+        const target = appointmentTargets.get(item.id);
+        target?.appointments.querySelectorAll('button, input, select').forEach(control => { control.disabled = true; });
+        await refreshAppointments(true);
+      } catch {
+        if (!current()) return;
+        verifyOnly = true;
+        button.textContent = 'Vérifier le statut';
+        feedback.textContent = 'Attribution non confirmée. Vérifie le statut de ta demande.';
+      } finally {
+        button.disabled = false;
+      }
+    });
+    card.append(button, feedback);
+  }
+
   async function refreshAppointments(force = false) {
     if (!userId || appointmentTargets.size === 0 || (readingAppointments && !force)) return;
     const read = ++appointmentRead;
@@ -559,7 +639,8 @@ for (const reponse of interets) {
       accepted: 'Rendez-vous confirmé',
       refused: 'Rendez-vous refusé',
       counter_proposed: 'Autre date proposée',
-      cancelled: 'Rendez-vous annulé'
+      cancelled: 'Rendez-vous annulé',
+      closed_assigned: 'Demande attribuée — proposition close'
     };
 
     const bloc = document.createElement('div');
@@ -773,4 +854,3 @@ async function chargerDemandesProfessionnelles() {
     console.error(erreur);
   }
 }
-
