@@ -17,7 +17,25 @@
   const section = document.getElementById("annonces-pro");
   const appointmentUI = window.batilinkAppointments;
   const client = window.batilinkClient;
+  // BatiLink UX actions progressives V2
   const appointmentTargets = new Map();
+  const actionTargets = new Map();
+
+  function afficherActions(id, reponse, entries) {
+    const ui = actionTargets.get(id);
+    if (!ui) return;
+    const enAttente = entries.some(r => r.status === "pending_client" || r.status === "counter_proposed");
+    const confirme = entries.some(r => r.status === "accepted");
+    const termine = entries.some(r => r.status === "refused" || r.status === "cancelled");
+    const interesse = Boolean(reponse) || entries.length > 0;
+    ui.interet.hidden = interesse;
+    ui.etat.hidden = !interesse || entries.length > 0;
+    ui.etat.textContent = interesse ? "✓ Intérêt envoyé" : "";
+    ui.formulaire.hidden = !reponse || enAttente;
+    if (ui.formulaire.hidden) ui.formulaire.open = false;
+    ui.ouvrir.textContent = confirme ? "Proposer un autre rendez-vous" :
+      termine ? "Proposer une nouvelle date" : "Proposer un rendez-vous";
+  }
   let orphanSection;
   let orphanList;
   let appointmentStatus;
@@ -29,6 +47,7 @@
     appointmentRead++;
     readingAppointments = false;
     appointmentTargets.clear();
+    actionTargets.clear();
     orphanSection = null;
     orphanList = null;
     appointmentStatus = null;
@@ -112,6 +131,12 @@
         const boutonInteret = creerElement("button", "Je suis intéressé");
         boutonInteret.type = "button";
         boutonInteret.className = "btn";
+        boutonInteret.hidden = true;
+        boutonInteret.style.minHeight = "44px";
+        const etatInteret = creerElement("p", "Vérification de votre réponse…");
+        etatInteret.setAttribute("role", "status");
+        etatInteret.style.color = "#166534";
+        etatInteret.style.fontWeight = "700";
 
         const retourInteret = creerElement("p", "");
         retourInteret.setAttribute("role", "status");
@@ -131,6 +156,7 @@
               if (error.message?.includes("Reponse deja envoyee")) {
                 boutonInteret.textContent = "Déjà répondu";
                 retourInteret.textContent = "Vous avez déjà répondu à cette annonce.";
+                await refreshAppointments(true);
               } else {
                 console.error("Erreur de réponse :", error);
                 retourInteret.textContent = "Envoi impossible. Réessayez.";
@@ -141,6 +167,8 @@
 
             boutonInteret.textContent = "Intérêt envoyé";
             retourInteret.textContent = "Votre intérêt a été enregistré.";
+            boutonInteret.hidden = true;
+            await refreshAppointments(true);
           } catch (erreur) {
             if (generation !== generationChargement) return;
             console.error("Erreur de connexion :", erreur);
@@ -149,7 +177,18 @@
           }
         });
 
-        carte.append(boutonInteret, retourInteret);
+        carte.append(boutonInteret, etatInteret, retourInteret);
+        // BatiLink UX rendez-vous 2026-11-26
+        const formulaireRdv = document.createElement("details");
+        formulaireRdv.style.marginTop = "12px";
+        formulaireRdv.hidden = true;
+        const ouvrirRdv = document.createElement("summary");
+        ouvrirRdv.className = "btn secondary";
+        ouvrirRdv.style.cursor = "pointer";
+        ouvrirRdv.style.fontSize = "16px";
+        ouvrirRdv.dataset.rdvToggle = "true";
+        ouvrirRdv.textContent = "Proposer un rendez-vous";
+        formulaireRdv.append(ouvrirRdv);
         const dateRdv = document.createElement("input");
         dateRdv.type = "date";
         dateRdv.setAttribute("aria-label", "Date du rendez-vous");
@@ -163,11 +202,23 @@
         messageRdv.maxLength = 1000;
 
         const boutonRdv = creerElement(
-          "button", "Proposer un rendez-vous"
+          "button", "Envoyer la proposition"
         );
         boutonRdv.type = "button";
         boutonRdv.className = "btn";
 
+        const annulerRdv = creerElement("button", "Annuler");
+        annulerRdv.type = "button";
+        annulerRdv.className = "btn secondary";
+        annulerRdv.style.marginLeft = "8px";
+        annulerRdv.addEventListener("click", () => {
+          formulaireRdv.open = false;
+          dateRdv.value = "";
+          heureRdv.value = "09:00";
+          messageRdv.value = "";
+          retourRdv.textContent = "";
+          ouvrirRdv.focus();
+        });
         const retourRdv = creerElement("p", "");
         retourRdv.setAttribute("role", "status");
 
@@ -189,6 +240,7 @@
           }
 
           boutonRdv.disabled = true;
+          annulerRdv.disabled = true;
           retourRdv.textContent = "Envoi en cours...";
 
           try {
@@ -223,6 +275,7 @@
             retourRdv.textContent = "Rendez-vous proposé au client.";
             dateRdv.value = "";
             messageRdv.value = "";
+            formulaireRdv.open = false;
             await refreshAppointments(true);
           } catch (erreur) {
             if (generation !== generationChargement) return;
@@ -231,20 +284,21 @@
               "Envoi non confirmé. Vérifiez le suivi avant de réessayer.";
           } finally {
             boutonRdv.disabled = false;
+            annulerRdv.disabled = false;
           }
         });
 
-        carte.append(
-          labelRdv,
-          dateRdv,
-          heureRdv,
-          messageRdv,
-          boutonRdv,
-          retourRdv
-        );
+        const actionsRdv = document.createElement("div");
+        actionsRdv.style.marginTop = "8px";
+        actionsRdv.append(boutonRdv, annulerRdv);
+        formulaireRdv.append(labelRdv, dateRdv, heureRdv, messageRdv, actionsRdv);
         const appointments = document.createElement("div");
         appointmentTargets.set(annonce.id, appointments);
-        carte.append(appointments);
+        actionTargets.set(annonce.id, {
+          interet: boutonInteret, etat: etatInteret,
+          formulaire: formulaireRdv, ouvrir: ouvrirRdv
+        });
+        carte.append(appointments, formulaireRdv, retourRdv);
         zone.append(carte);
       });
 
@@ -270,9 +324,15 @@
     readingAppointments = true;
 
     try {
-      const { data, error } = await client.rpc("batilink_my_appointments");
+      const [rendezvous, reponses] = await Promise.all([
+        client.rpc("batilink_my_appointments"),
+        client.rpc("batilink_my_professional_responses")
+      ]);
       if (read !== appointmentRead || generation !== generationChargement) return;
-      if (error) throw error;
+      if (rendezvous.error) throw rendezvous.error;
+      if (reponses.error) throw reponses.error;
+      const data = rendezvous.data;
+      const reponsesParAnnonce = new Map((reponses.data ?? []).map(r => [r.request_id, r]));
 
       const byRequest = new Map();
       const orphans = [];
@@ -291,14 +351,22 @@
       appointmentStatus.textContent = "";
       const render = rdv => renderAppointment(rdv, generation);
       for (const [id, target] of appointmentTargets) {
-        appointmentUI.renderList(target, byRequest.get(id) ?? [], render);
+        const entries = byRequest.get(id) ?? [];
+        appointmentUI.renderList(target, entries, render);
+        afficherActions(id, reponsesParAnnonce.get(id), entries);
       }
       appointmentUI.renderList(orphanList, orphans, render);
       orphanSection.hidden = orphans.length === 0;
     } catch (error) {
       if (read !== appointmentRead || generation !== generationChargement) return;
       console.error("Chargement des rendez-vous :", error);
-      appointmentStatus.textContent = "Rendez-vous momentanément indisponibles.";
+      appointmentStatus.textContent = "Impossible de vérifier vos réponses et rendez-vous. Réessayez dans un instant.";
+      for (const ui of actionTargets.values()) {
+        ui.interet.hidden = true;
+        ui.formulaire.hidden = true;
+        ui.formulaire.open = false;
+        ui.etat.hidden = true;
+      }
     } finally {
       if (read === appointmentRead) readingAppointments = false;
     }
@@ -316,10 +384,14 @@
       cancelled: "Rendez-vous annulé"
     };
 
-    bloc.append(
-      creerElement("strong", "Rendez-vous de chantier"),
-      creerElement("p", statuts[rdv.status] || rdv.status)
-    );
+    // BatiLink UX expiration V3
+    const expire = appointmentUI.isExpired(rdv);
+    const statutRdv = creerElement("p", expire ? "Date proposée dépassée" : (statuts[rdv.status] || rdv.status));
+    statutRdv.style.fontWeight = "700";
+    statutRdv.style.color = rdv.status === "accepted" ? "#166534" :
+      rdv.status === "refused" || rdv.status === "cancelled" ? "#991b1b" : "#854d0e";
+    if (expire) statutRdv.style.color = "#991b1b";
+    bloc.append(creerElement("strong", "Rendez-vous de chantier"), statutRdv);
     for (const ligne of appointmentUI.dates(rdv)) bloc.append(creerElement("p", ligne));
 
     if (rdv.message) {
@@ -335,9 +407,17 @@
       accepter.type = "button";
       refuser.type = "button";
       accepter.className = "btn";
-      refuser.className = "btn";
+      refuser.className = "btn secondary";
+      for (const bouton of [accepter, refuser]) {
+        bouton.style.minHeight = "44px";
+        bouton.style.fontSize = "16px";
+      }
 
       async function decision(action) {
+        if (action === "accept" && appointmentUI.isExpired(rdv)) {
+          await refreshAppointments(true);
+          return;
+        }
         accepter.disabled = true;
         refuser.disabled = true;
         retour.textContent = "Enregistrement en cours...";
@@ -369,7 +449,13 @@
       accepter.addEventListener("click", () => decision("accept"));
       refuser.addEventListener("click", () => decision("refuse"));
 
-      bloc.append(accepter, refuser, retour);
+      const actions = document.createElement("div");
+      actions.style.display = "flex";
+      actions.style.flexWrap = "wrap";
+      actions.style.gap = "12px";
+      if (!expire) actions.append(accepter);
+      actions.append(refuser);
+      bloc.append(actions, retour);
     }
     return bloc;
   }

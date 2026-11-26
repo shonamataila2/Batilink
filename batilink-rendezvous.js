@@ -56,13 +56,22 @@ window.batilinkAppointments = (() => {
     return lines;
   }
 
+  // BatiLink UX expiration V3
+  function isExpired(appointment) {
+    const value = appointment.status === "pending_client" ? appointment.proposed_start_at :
+      appointment.status === "counter_proposed" ? appointment.counter_start_at : null;
+    if (!["pending_client", "counter_proposed"].includes(appointment.status)) return false;
+    const time = Date.parse(value);
+    return !Number.isFinite(time) || time <= Date.now();
+  }
+
   function renderList(container, appointments, render) {
     const existing = new Map(Array.from(container.children, node => [node.dataset.appointmentId, node]));
     for (const appointment of appointments) {
       const id = String(appointment.appointment_id);
       const signature = JSON.stringify([
         appointment.status, appointment.proposed_start_at, appointment.counter_start_at,
-        appointment.confirmed_start_at, appointment.message
+        appointment.confirmed_start_at, appointment.message, isExpired(appointment)
       ]);
       const previous = existing.get(id);
       existing.delete(id);
@@ -84,5 +93,5 @@ window.batilinkAppointments = (() => {
     document.addEventListener("visibilitychange", check);
   }
 
-  return { timeSelect, toInstant, dates, renderList, watch };
+  return { timeSelect, toInstant, dates, renderList, watch, isExpired };
 })();

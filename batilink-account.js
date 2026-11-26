@@ -569,7 +569,13 @@ for (const reponse of interets) {
     titre.textContent = 'Rendez-vous de chantier';
 
     const statut = document.createElement('p');
-    statut.textContent = statutsRdv[rdv.status] || rdv.status;
+    // BatiLink UX expiration V3
+    const expire = appointmentUI.isExpired(rdv);
+    statut.textContent = expire ? 'Date proposée dépassée' : (statutsRdv[rdv.status] || rdv.status);
+    statut.style.fontWeight = '700';
+    statut.style.color = rdv.status === 'accepted' ? '#166534' :
+      rdv.status === 'refused' || rdv.status === 'cancelled' ? '#991b1b' : '#854d0e';
+    if (expire) statut.style.color = '#991b1b';
     bloc.append(titre, statut);
     for (const ligne of appointmentUI.dates(rdv)) {
       const date = document.createElement('p');
@@ -583,7 +589,20 @@ for (const reponse of interets) {
       bloc.append(message);
     }
     if (rdv.status === 'pending_client') {
+      // BatiLink UX rendez-vous 2026-11-26
       const actions = document.createElement('div');
+      actions.style.display = 'flex';
+      actions.style.flexWrap = 'wrap';
+      // BatiLink UX actions progressives V2
+      actions.style.gap = '12px';
+      const formulaire = document.createElement('details');
+      formulaire.style.marginTop = '10px';
+      const ouvrir = document.createElement('summary');
+      ouvrir.className = 'btn secondary';
+      ouvrir.style.cursor = 'pointer';
+      ouvrir.style.fontSize = '16px';
+      ouvrir.textContent = 'Proposer une autre date';
+      formulaire.append(ouvrir);
 
       const nouvelleDate = document.createElement('input');
       nouvelleDate.type = 'date';
@@ -603,17 +622,25 @@ for (const reponse of interets) {
       for (const [action, libelle] of [
         ['accept', 'Accepter'],
         ['refuse', 'Refuser'],
-        ['counter', 'Proposer une autre date']
+        ['counter', 'Envoyer la nouvelle date']
       ]) {
+        if (action === 'accept' && expire) continue;
         const bouton = document.createElement('button');
         bouton.type = 'button';
         bouton.textContent = libelle;
+        bouton.className = action === 'refuse' ? 'btn secondary' : 'btn';
+        bouton.style.minHeight = '44px';
+        bouton.style.fontSize = '16px';
         boutons.push(bouton);
 
         bouton.addEventListener('click', async () => {
           const owner = userId;
           const version = refreshVersion;
           let dateProposee = null;
+          if (action === 'accept' && appointmentUI.isExpired(rdv)) {
+            await refreshAppointments(true);
+            return;
+          }
 
           if (action === 'counter') {
             if (!nouvelleDate.value || !nouvelleHeure.value) {
@@ -668,10 +695,31 @@ for (const reponse of interets) {
           }
         });
 
-        actions.append(bouton);
+        if (action === 'counter') {
+          const choixActions = document.createElement('div');
+          choixActions.style.display = 'flex';
+          choixActions.style.flexWrap = 'wrap';
+          choixActions.style.gap = '8px';
+          const annuler = document.createElement('button');
+          annuler.type = 'button';
+          annuler.className = 'btn secondary';
+          annuler.textContent = 'Annuler';
+          annuler.addEventListener('click', () => {
+            formulaire.open = false;
+            nouvelleDate.value = '';
+            nouvelleHeure.value = '';
+            retour.textContent = '';
+            ouvrir.focus();
+          });
+          boutons.push(annuler);
+          choixActions.append(bouton, annuler);
+          formulaire.append(indication, nouvelleDate, nouvelleHeure, choixActions);
+        } else {
+          actions.append(bouton);
+        }
       }
 
-      bloc.append(indication, nouvelleDate, nouvelleHeure, actions, retour);
+      bloc.append(actions, formulaire, retour);
     }
     return bloc;
   }
