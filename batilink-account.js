@@ -42,6 +42,10 @@ function connectAccount(client) {
   let requestOwner = null;
   let requestId = null;
   let refreshVersion = 0;
+  let appointmentRead = 0;
+  let readingAppointments = false;
+  const appointmentTargets = new Map();
+  const appointmentUI = window.batilinkAppointments;
 
   if (online) online.hidden = false;
   if (requestButton) requestButton.textContent = 'Enregistrer dans mon compte';
@@ -181,6 +185,9 @@ show('home');
 
     if (userId !== nextUser) {
       refreshVersion++;
+      appointmentRead++;
+      readingAppointments = false;
+      appointmentTargets.clear();
       if (onlineList) onlineList.replaceChildren();
 
       if (userId && requestForm) {
@@ -416,11 +423,16 @@ if (home) {
   }
 
   document.addEventListener('batilink:tracking', refreshRequests);
+  const tracking = document.getElementById('tracking');
+  if (tracking) appointmentUI.watch(tracking, () => refreshAppointments());
 refreshRequests();
   async function refreshRequests() {
     if (!userId || !onlineStatus || !onlineList) return;
 
     const version = ++refreshVersion;
+    appointmentRead++;
+    readingAppointments = false;
+    appointmentTargets.clear();
     onlineStatus.textContent = 'Chargement des demandes…';
     onlineList.replaceChildren();
 
@@ -493,14 +505,223 @@ for (const reponse of interets) {
   card.append(ligneInteret);
 }
 
+        const appointments = document.createElement('div');
+        const appointmentStatus = document.createElement('p');
+        appointmentStatus.setAttribute('role', 'status');
+        appointmentTargets.set(item.id, { appointments, appointmentStatus });
+        card.append(appointmentStatus, appointments);
         onlineList.append(card);
       }
+      await refreshAppointments();
     } catch {
       if (version === refreshVersion) {
         onlineStatus.textContent =
           'Impossible de charger tes demandes. Ouvre à nouveau Suivi pour réessayer.';
       }
     }
+  }
+  async function refreshAppointments(force = false) {
+    if (!userId || appointmentTargets.size === 0 || (readingAppointments && !force)) return;
+    const read = ++appointmentRead;
+    const owner = userId;
+    readingAppointments = true;
+
+    try {
+      const { data, error } = await client.rpc('batilink_my_appointments');
+      if (read !== appointmentRead || owner !== userId) return;
+      if (error) throw error;
+
+      const byRequest = new Map();
+      for (const rdv of data ?? []) {
+        if (rdv.my_role !== 'client' || !appointmentTargets.has(rdv.request_id)) continue;
+        const entries = byRequest.get(rdv.request_id) ?? [];
+        entries.push(rdv);
+        byRequest.set(rdv.request_id, entries);
+      }
+      for (const [id, { appointments, appointmentStatus }] of appointmentTargets) {
+        appointmentStatus.textContent = '';
+        appointmentUI.renderList(appointments, byRequest.get(id) ?? [], renderAppointment);
+      }
+    } catch (error) {
+      if (read !== appointmentRead || owner !== userId) return;
+      console.error('Chargement des rendez-vous :', error);
+      for (const { appointmentStatus } of appointmentTargets.values()) {
+        appointmentStatus.textContent = 'Rendez-vous momentanément indisponibles.';
+      }
+    } finally {
+      if (read === appointmentRead) readingAppointments = false;
+    }
+  }
+
+  function renderAppointment(rdv) {
+    const statutsRdv = {
+      pending_client: 'En attente de votre réponse',
+      accepted: 'Rendez-vous confirmé',
+      refused: 'Rendez-vous refusé',
+      counter_proposed: 'Autre date proposée',
+      cancelled: 'Rendez-vous annulé'
+    };
+
+    const bloc = document.createElement('div');
+    bloc.className = 'card';
+
+    const titre = document.createElement('strong');
+    titre.textContent = 'Rendez-vous de chantier';
+
+    const statut = document.createElement('p');
+    // BatiLink UX expiration V3
+    const expire = appointmentUI.isExpired(rdv);
+    statut.textContent = expire ? 'Date proposée dépassée' : (statutsRdv[rdv.status] || rdv.status);
+    statut.style.fontWeight = '700';
+    statut.style.color = rdv.status === 'accepted' ? '#166534' :
+      rdv.status === 'refused' || rdv.status === 'cancelled' ? '#991b1b' : '#854d0e';
+    if (expire) statut.style.color = '#991b1b';
+    bloc.append(titre, statut);
+    for (const ligne of appointmentUI.dates(rdv)) {
+      const date = document.createElement('p');
+      date.textContent = ligne;
+      bloc.append(date);
+    }
+
+    if (rdv.message) {
+      const message = document.createElement('p');
+      message.textContent = rdv.message;
+      bloc.append(message);
+    }
+    if (rdv.status === 'pending_client') {
+      // BatiLink UX rendez-vous 2026-11-26
+      const actions = document.createElement('div');
+      actions.style.display = 'flex';
+      actions.style.flexWrap = 'wrap';
+      // BatiLink UX actions progressives V2
+      actions.style.gap = '12px';
+      const formulaire = document.createElement('details');
+      formulaire.style.marginTop = '10px';
+      const ouvrir = document.createElement('summary');
+      ouvrir.className = 'btn secondary';
+      ouvrir.style.cursor = 'pointer';
+      ouvrir.style.fontSize = '16px';
+      ouvrir.textContent = 'Proposer une autre date';
+      formulaire.append(ouvrir);
+
+      const nouvelleDate = document.createElement('input');
+      nouvelleDate.type = 'date';
+      const nouvelleHeure = appointmentUI.timeSelect('Heure proposée, heure de Nouvelle-Calédonie');
+      nouvelleDate.setAttribute(
+        'aria-label', 'Nouvelle date, heure de Nouvelle-Calédonie'
+      );
+
+      const indication = document.createElement('p');
+      indication.textContent = 'Nouvelle date (heure de Nouvelle-Calédonie) :';
+
+      const retour = document.createElement('p');
+      retour.setAttribute('role', 'status');
+
+      const boutons = [];
+
+      for (const [action, libelle] of [
+        ['accept', 'Accepter'],
+        ['refuse', 'Refuser'],
+        ['counter', 'Envoyer la nouvelle date']
+      ]) {
+        if (action === 'accept' && expire) continue;
+        const bouton = document.createElement('button');
+        bouton.type = 'button';
+        bouton.textContent = libelle;
+        bouton.className = action === 'refuse' ? 'btn secondary' : 'btn';
+        bouton.style.minHeight = '44px';
+        bouton.style.fontSize = '16px';
+        boutons.push(bouton);
+
+        bouton.addEventListener('click', async () => {
+          const owner = userId;
+          const version = refreshVersion;
+          let dateProposee = null;
+          if (action === 'accept' && appointmentUI.isExpired(rdv)) {
+            await refreshAppointments(true);
+            return;
+          }
+
+          if (action === 'counter') {
+            if (!nouvelleDate.value || !nouvelleHeure.value) {
+              retour.textContent = 'Choisissez une date et une heure.';
+              return;
+            }
+
+            const choix = appointmentUI.toInstant(nouvelleDate.value, nouvelleHeure.value);
+
+            if (!Number.isFinite(choix.getTime()) ||
+                choix.getTime() <= Date.now()) {
+              retour.textContent = 'Choisissez une date future.';
+              return;
+            }
+
+            dateProposee = choix.toISOString();
+          }
+
+          if (!window.confirm('Confirmer : ' + libelle + ' ?')) {
+            return;
+          }
+
+          boutons.forEach(b => b.disabled = true);
+          nouvelleDate.disabled = true;
+          nouvelleHeure.disabled = true;
+          retour.textContent = 'Enregistrement en cours...';
+
+          try {
+            const { error } = await client.rpc(
+              'batilink_client_appointment_decision',
+              {
+                p_appointment_id: rdv.appointment_id,
+                p_action: action,
+                p_counter_start_at: dateProposee
+              }
+            );
+
+            if (owner !== userId || version !== refreshVersion) return;
+            if (error) throw error;
+
+            retour.textContent = 'Décision enregistrée.';
+            await refreshAppointments(true);
+
+          } catch (err) {
+            if (owner !== userId || version !== refreshVersion) return;
+            console.error('Décision rendez-vous :', err);
+            retour.textContent =
+              'Impossible de confirmer la décision. Actualisez le suivi.';
+            boutons.forEach(b => b.disabled = false);
+            nouvelleDate.disabled = false;
+            nouvelleHeure.disabled = false;
+          }
+        });
+
+        if (action === 'counter') {
+          const choixActions = document.createElement('div');
+          choixActions.style.display = 'flex';
+          choixActions.style.flexWrap = 'wrap';
+          choixActions.style.gap = '8px';
+          const annuler = document.createElement('button');
+          annuler.type = 'button';
+          annuler.className = 'btn secondary';
+          annuler.textContent = 'Annuler';
+          annuler.addEventListener('click', () => {
+            formulaire.open = false;
+            nouvelleDate.value = '';
+            nouvelleHeure.value = '';
+            retour.textContent = '';
+            ouvrir.focus();
+          });
+          boutons.push(annuler);
+          choixActions.append(bouton, annuler);
+          formulaire.append(indication, nouvelleDate, nouvelleHeure, choixActions);
+        } else {
+          actions.append(bouton);
+        }
+      }
+
+      bloc.append(actions, formulaire, retour);
+    }
+    return bloc;
   }
 }
 
